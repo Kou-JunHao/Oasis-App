@@ -10,7 +10,7 @@ export default function Home() {
     return (
          <div className={"w-full h-full flex flex-col justify-center items-center"}>
             <h1 className={"font-bold text-3xl"}>慧生活 798 助手</h1>
-            <div className={"mt-4 text-gray-400"}>Fuck you, the iLife 798 full of ads!</div>
+            <div className={"mt-4 text-gray-400"}>ᖁᕕᐊᓇᓐᖏᑦᑐᖅ, iLife798 ᑕᑕᑦᑐᖅ ᓴᖅᑭᔮᖅᑎᑦᑎᔾᔪᑎᓂᒃ!</div>
 
             <div className={"main-panel"}>
                 <Main base_url={base_url} s={s} r={r}/>
