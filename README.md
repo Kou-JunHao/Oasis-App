@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anti-Ad iLife798
+如果你和我一样，对接个水还要看广告这件事感到匪夷所思和出离愤怒，并且你们单位的饮水系统又恰好是**慧生活798**，别犹豫，这个项目就是为你准备的。
 
-## Getting Started
+关于慧生活798这个 full of ads 的 APP，我已经无力吐槽了。你在 APP 中植入广告我不反对，但是你植入广告的频率和方式实在是太过分了！开屏有开屏广告，首页有那个激起全网找祖坟活动的摇一摇广告，接一次水还要再看广告。我真的是受够了！
 
-First, run the development server:
+我对慧生活798的网络活动进行了抓包，并且对安卓版进行了逆向（还好这就是一个 Uniapp），搞明白了 APP 的运行机制。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 使用方法
+1. 你仍需要在慧生活798 APP 中注册、登录并且绑定取水设备。项目中不包含这些，后续视反馈情况随缘更新。
+2. 访问 [项目网站](https://ilife798.kynix.tw/)，登录你的慧生活798账号。账号不支持多端登录，因此登录后你的手机端会被登出。
+3. 正常取水即可。
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Preview
+![Preview1](https://pictures.axiomatrix.org/main.png)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+![Preview2](https://pictures.axiomatrix.org/list.png)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 私有化部署
+本项目是一个标准的 Next.js 项目，请访问 [Next.js 文档](https://nextjs.org/docs/app/building-your-application/deploying) 以获取更多信息。
 
-## Learn More
+## PWA
+本项目支持 PWA，你可以通过浏览器的 PWA 功能将本项目添加到桌面，以便更方便地使用。
 
-To learn more about Next.js, take a look at the following resources:
+但是注意，国内的浏览器对 PWA 的支持并不是很好，因此推荐使用 Chrome 或 Safari。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 免责声明
+本项目仅供学习交流使用，不得用于商业用途。使用本项目造成的一切后果由使用者自行承担，与作者无关。
