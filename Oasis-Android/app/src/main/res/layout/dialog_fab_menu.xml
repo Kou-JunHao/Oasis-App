@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:minWidth="160dp">
+
+        <!-- 添加设备按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddDevice"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="4dp"
+            android:text="添加设备"
+            android:textSize="14sp"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="start|center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:icon="@drawable/ic_add"
+            app:iconSize="20dp"
+            app:iconTint="?attr/colorOnSurface"
+            app:iconGravity="start"
+            app:cornerRadius="12dp"
+            app:rippleColor="?attr/colorOnSurface"
+            android:backgroundTint="@android:color/transparent" />
+
+        <!-- 删除设备按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteDevice"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="删除设备"
+            android:textSize="14sp"
+            android:textColor="?attr/colorError"
+            android:gravity="start|center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:icon="@drawable/ic_delete_24"
+            app:iconSize="20dp"
+            app:iconTint="?attr/colorError"
+            app:iconGravity="start"
+            app:cornerRadius="12dp"
+            app:rippleColor="?attr/colorError"
+            android:backgroundTint="@android:color/transparent" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

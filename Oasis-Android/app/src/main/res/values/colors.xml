@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 Light Theme Colors -->
+    <!-- Primary -->
+    <color name="md_theme_light_primary">#0061A4</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#D1E4FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001D36</color>
+    
+    <!-- Secondary -->
+    <color name="md_theme_light_secondary">#535F70</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#D7E3F7</color>
+    <color name="md_theme_light_onSecondaryContainer">#101C2B</color>
+    
+    <!-- Surface -->
+    <color name="md_theme_light_surface">#FEFBFF</color>
+    <color name="md_theme_light_onSurface">#1B1B1F</color>
+    <color name="md_theme_light_surfaceVariant">#DFE2EB</color>
+    <color name="md_theme_light_onSurfaceVariant">#43474E</color>
+    <color name="md_theme_light_surfaceContainer">#F3F4FA</color>
+    
+    <!-- Material 3 Dark Theme Colors -->
+    <!-- Primary -->
+    <color name="md_theme_dark_primary">#9ECAFF</color>
+    <color name="md_theme_dark_onPrimary">#003258</color>
+    <color name="md_theme_dark_primaryContainer">#00497D</color>
+    <color name="md_theme_dark_onPrimaryContainer">#D1E4FF</color>
+    
+    <!-- Secondary -->
+    <color name="md_theme_dark_secondary">#BBC7DB</color>
+    <color name="md_theme_dark_onSecondary">#253140</color>
+    <color name="md_theme_dark_secondaryContainer">#3B4858</color>
+    <color name="md_theme_dark_onSecondaryContainer">#D7E3F7</color>
+    
+    <!-- Surface -->
+    <color name="md_theme_dark_surface">#10131A</color>
+    <color name="md_theme_dark_onSurface">#E3E2E6</color>
+    <color name="md_theme_dark_surfaceVariant">#43474E</color>
+    <color name="md_theme_dark_onSurfaceVariant">#C3C7CF</color>
+    <color name="md_theme_dark_surfaceContainer">#1E2129</color>
+    
+    <!-- Basic Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Status Colors -->
+    <color name="status_online">#4CAF50</color>
+    <color name="status_offline">#F44336</color>
+    <color name="status_warning">#FF9800</color>
+    
+    <!-- Scanner Colors -->
+    <color name="black_overlay">#80000000</color>
+    <color name="zxing_viewfinder_laser">#FF0000</color>
+    <color name="zxing_viewfinder_mask">#60000000</color>
+    <color name="zxing_possible_result_points">#C0FFFF00</color>
+    <color name="zxing_result_view">#B0000000</color>
+    
+    <!-- Status colors -->
+    <color name="status_success">#4CAF50</color>
+    <color name="status_error">#F44336</color>
+    
+    <!-- Legacy colors for compatibility -->
+    <color name="purple_500">#6200EE</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="gray_600">#757575</color>
+    
+    <!-- Additional colors for UI -->
+    <color name="blue">#2196F3</color>
+    <color name="green">#4CAF50</color>
+    <color name="red">#F44336</color>
+    <color name="orange">#FF9800</color>
+    <color name="purple">#9C27B0</color>
+    <color name="gray">#9E9E9E</color>
+    <color name="light_gray">#E0E0E0</color>
+    <color name="dark_gray">#616161</color>
+    
+    <!-- Material 3 Theme Aliases -->
+    <color name="md_theme_primary">@color/md_theme_light_primary</color>
+    <color name="md_theme_on_primary">@color/md_theme_light_onPrimary</color>
+    <color name="md_theme_primary_container">@color/md_theme_light_primaryContainer</color>
+    <color name="md_theme_on_primary_container">@color/md_theme_light_onPrimaryContainer</color>
+    <color name="md_theme_secondary">@color/md_theme_light_secondary</color>
+    <color name="md_theme_on_secondary">@color/md_theme_light_onSecondary</color>
+    <color name="md_theme_secondary_container">@color/md_theme_light_secondaryContainer</color>
+    <color name="md_theme_on_secondary_container">@color/md_theme_light_onSecondaryContainer</color>
+    <color name="md_theme_surface">@color/md_theme_light_surface</color>
+    <color name="md_theme_on_surface">@color/md_theme_light_onSurface</color>
+    <color name="md_theme_surface_variant">@color/md_theme_light_surfaceVariant</color>
+    <color name="md_theme_on_surface_variant">@color/md_theme_light_onSurfaceVariant</color>
+    <color name="md_theme_surface_container">@color/md_theme_light_surfaceContainer</color>
+    
+    <!-- App Theme Colors -->
+    <color name="primary">@color/md_theme_light_primary</color>
+    <color name="accent">#FF9800</color>
+    <color name="text_primary">@color/md_theme_light_onSurface</color>
+    <color name="text_secondary">@color/md_theme_light_onSurfaceVariant</color>
+    <color name="background_light">@color/md_theme_light_surface</color>
+</resources>

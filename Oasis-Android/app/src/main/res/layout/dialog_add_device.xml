@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_device_water_dispenser"
+            app:tint="?attr/colorPrimary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="添加新设备"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="输入设备ID或扫描二维码"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Device ID Input Section -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilDeviceId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:hint="设备ID"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:startIconDrawable="@drawable/ic_qr_code"
+        app:startIconTint="?attr/colorOnSurfaceVariant"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_qr_code_scanner"
+        app:endIconTint="?attr/colorPrimary"
+        app:endIconContentDescription="扫描二维码"
+        app:helperText="输入12-15位数字设备ID"
+        app:helperTextTextColor="?attr/colorOnSurfaceVariant"
+        app:boxStrokeColor="?attr/colorOutline"
+        app:hintTextColor="?attr/colorOnSurfaceVariant">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDeviceId"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:maxLines="1"
+            android:maxLength="15"
+            android:textSize="16sp"
+            android:textColor="?attr/colorOnSurface"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Quick Actions Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:gravity="center">
+
+        <!-- Scan QR Code Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnScanQR"
+            style="@style/Widget.Material3.Button.TonalButton.Icon"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="12dp"
+            android:text="扫码添加"
+            android:textSize="14sp"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            app:backgroundTint="?attr/colorSecondaryContainer"
+            app:icon="@drawable/ic_qr_code_scanner"
+            app:iconTint="?attr/colorOnSecondaryContainer"
+            app:iconSize="18dp"
+            app:cornerRadius="24dp" />
+
+        <!-- Manual Input Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnManualInput"
+            style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:text="手动输入"
+            android:textSize="14sp"
+            android:textColor="?attr/colorPrimary"
+            app:strokeColor="?attr/colorOutline"
+            app:icon="@drawable/ic_edit"
+            app:iconTint="?attr/colorPrimary"
+            app:iconSize="18dp"
+            app:cornerRadius="24dp" />
+
+    </LinearLayout>
+
+    <!-- Info Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLow">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="20dp"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_info"
+                app:tint="?attr/colorPrimary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="设备ID通常为12-15位数字，可在设备标签或二维码中找到"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:lineSpacingExtra="4dp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
+
+        <!-- Cancel Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="取消"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp"
+            app:rippleColor="?attr/colorOnSurface"
+            android:backgroundTint="@android:color/transparent"
+            android:minWidth="0dp"
+            android:singleLine="true" />
+
+        <!-- Add Device Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddDevice"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="添加设备"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:backgroundTint="?attr/colorPrimary"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_add"
+            app:iconTint="?attr/colorOnPrimary"
+            app:iconSize="18dp"
+            app:iconGravity="textStart"
+            app:iconPadding="6dp"
+            app:rippleColor="?attr/colorOnPrimary"
+            android:elevation="2dp"
+            android:minWidth="0dp"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:ellipsize="none"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

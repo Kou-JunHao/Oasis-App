@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- 相机权限 - 用于扫码功能 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- 相机硬件特性声明 - 设置为非必需以支持Chrome OS等大屏设备 -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:name=".LifeWaterApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.LifeWater"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- 主Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.LifeWater.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 登录Activity -->
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+
+
+        <!-- 主导航Activity -->
+        <activity
+            android:name=".ui.main.MainNavigationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+        <!-- QR码扫描Activity (CameraX + ML Kit) -->
+        <activity
+            android:name=".ui.qrcode.QRCodeScanActivityNew"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+        <!-- 设备测试Activity -->
+        <activity
+            android:name=".ui.test.DeviceTestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+        <!-- 设置Activity -->
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+        <!-- 添加设备Activity -->
+        <activity
+            android:name=".ui.device.AddDeviceActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 充值Activity -->
+        <activity
+            android:name=".ui.recharge.RechargeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+    </application>
+
+</manifest>

@@ -1,0 +1,42 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme for Android 12+ with dynamic colors -->
+    <style name="Theme.LifeWater" parent="Theme.Material3.DayNight">
+        <!-- Dynamic colors from system -->
+        <item name="colorPrimary">@android:color/system_accent1_600</item>
+        <item name="colorSecondary">@android:color/system_accent2_600</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnSecondary">@color/black</item>
+        
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorSurfaceVariant</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    
+    <!-- Theme with dynamic colors disabled -->
+    <style name="Theme.LifeWater.NoMonet" parent="Theme.Material3.DayNight">
+        <!-- Use static colors -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorSurfaceVariant</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- NoActionBar theme for activities that manage their own toolbar -->
+    <style name="Theme.LifeWater.NoActionBar" parent="Theme.LifeWater">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+    
+    <!-- NoActionBar theme with dynamic colors disabled -->
+    <style name="Theme.LifeWater.NoMonet.NoActionBar" parent="Theme.LifeWater.NoMonet">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

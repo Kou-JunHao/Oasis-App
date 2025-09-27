@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@android:color/white">
+  <!-- Material 3 local_drink icon -->
+  <path
+      android:fillColor="@android:color/white"
+      android:pathData="M5,3l1.9,16.05c0.11,0.96 0.91,1.95 1.9,1.95h6.4c0.99,0 1.79,-0.99 1.9,-1.95L19,3H5zM7.44,7h9.12l-0.44,3.63h-8.24L7.44,7z"/>
+</vector>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    android:minHeight="140dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="2dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+    android:clickable="true"
+    android:focusable="true"
+    style="@style/Widget.Material3.CardView.Outlined">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <!-- 产品名称 -->
+        <TextView
+            android:id="@+id/text_product_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="4dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="充值套餐" />
+
+        <!-- 金额 -->
+        <TextView
+            android:id="@+id/text_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="6dp"
+            tools:text="¥10" />
+
+        <!-- 优惠信息 -->
+        <LinearLayout
+            android:id="@+id/layout_offers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/text_discount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorError"
+                android:visibility="gone"
+                android:layout_marginBottom="2dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:gravity="center"
+                tools:text="优惠¥5" />
+
+            <TextView
+                android:id="@+id/text_bonus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                android:textColor="?attr/colorPrimary"
+                android:visibility="gone"
+                android:layout_marginBottom="2dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:gravity="center"
+                tools:text="送¥1" />
+
+            <TextView
+                android:id="@+id/text_gift"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                android:textColor="?attr/colorSecondary"
+                android:visibility="gone"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:gravity="center"
+                tools:text="限时优惠活动" />
+
+        </LinearLayout>
+
+        <!-- 选中指示器 -->
+        <View
+            android:id="@+id/view_selected_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:background="?attr/colorPrimary"
+            android:layout_marginTop="12dp"
+            android:visibility="invisible" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
