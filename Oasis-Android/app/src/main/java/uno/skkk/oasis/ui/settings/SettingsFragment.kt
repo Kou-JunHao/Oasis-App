@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
@@ -172,7 +173,7 @@ class SettingsFragment : LazyLoadFragment() {
         // 设置应用信息
         dialogBinding.apply {
             tvAppName.text = getString(R.string.app_name)
-            tvVersion.text = packageInfo?.versionName ?: "1.0.0"
+            tvVersion.text = packageInfo?.versionName ?: BuildConfig.VERSION_NAME
             
             // 设置真实构建时间
             tvBuildTime.text = BuildConfig.BUILD_DATE
@@ -193,7 +194,7 @@ class SettingsFragment : LazyLoadFragment() {
         }
         
         // 创建并显示对话框
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setView(dialogBinding.root)
             .create()
         
@@ -203,6 +204,21 @@ class SettingsFragment : LazyLoadFragment() {
         }
         
         dialog.show()
+        
+        // 设置对话框窗口大小限制以适应不同DPI
+        dialog.window?.let { window ->
+            val displayMetrics = resources.displayMetrics
+            val screenHeight = displayMetrics.heightPixels
+            val maxHeight = (screenHeight * 0.85).toInt() // 最大高度为屏幕高度的85%
+            val maxWidth = (displayMetrics.widthPixels * 0.9).toInt() // 最大宽度为屏幕宽度的90%
+            
+            window.setLayout(maxWidth, android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+            window.attributes = window.attributes.apply {
+                if (height > maxHeight) {
+                    height = maxHeight
+                }
+            }
+        }
     }
     
     private fun logout() {

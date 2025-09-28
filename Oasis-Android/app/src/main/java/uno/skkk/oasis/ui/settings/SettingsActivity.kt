@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import uno.skkk.oasis.BuildConfig
 import uno.skkk.oasis.LifeWaterApplication
 import uno.skkk.oasis.databinding.ActivitySettingsBinding
 import uno.skkk.oasis.ui.base.BaseActivity
@@ -88,7 +89,7 @@ class SettingsActivity : BaseActivity() {
             .setTitle("关于 Oasis App")
             .setMessage("Oasis App - Anti-Ad iLife798 项目\n\n" +
                     "这是一个为 iLife798 智能设备用户提供无广告控制界面的应用。\n\n" +
-                    "版本: 1.0.0\n" +
+                    "版本: ${BuildConfig.VERSION_NAME}\n" +
                     "开源项目地址: https://github.com/Kou-JunHao/Oasis-App")
             .setPositiveButton("访问GitHub") { _, _ ->
                 openGitHubPage()

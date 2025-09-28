@@ -10,14 +10,14 @@ plugins {
 
 android {
     namespace = "uno.skkk.oasis"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "uno.skkk.oasis"
         minSdk = 24  // Android 7.0 (API level 24)
-        targetSdk = 34  // Android 14 compatibility
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36  // Android 16 compatibility
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
