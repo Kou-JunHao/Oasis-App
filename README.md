@@ -9,7 +9,7 @@
 
 - **应用包名**: `uno.skkk.oasis`
 - **最低支持版本**: Android 7.0 (API 24)
-- **目标版本**: Android 14 (API 34)
+- **目标版本**: Android 16 (API 36)
 - **开发语言**: Kotlin
 - **架构**: 使用 Hilt 依赖注入，ViewBinding
 
