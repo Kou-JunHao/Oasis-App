@@ -15,11 +15,12 @@ import com.google.android.material.tabs.TabLayout
 import uno.skkk.oasis.R
 import uno.skkk.oasis.databinding.FragmentOrderBinding
 import uno.skkk.oasis.ui.components.UnifiedTopBar
+import uno.skkk.oasis.ui.base.LazyLoadFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class OrderFragment : Fragment() {
+class OrderFragment : LazyLoadFragment() {
     
     private var _binding: FragmentOrderBinding? = null
     private val binding get() = _binding!!
@@ -45,6 +46,15 @@ class OrderFragment : Fragment() {
         setupRecyclerView()
         setupSwipeRefresh()
         observeViewModel()
+        // 移除立即数据加载，改为懒加载机制
+        // loadOrders() 将在 loadData() 中调用
+    }
+    
+    /**
+     * 实现懒加载数据加载方法
+     * 只有当Fragment对用户可见时才会调用此方法
+     */
+    override fun loadData() {
         loadOrders() // 首次加载，显示LoadingIndicator
         isFirstLoad = false
     }
@@ -52,7 +62,7 @@ class OrderFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // 只在非首次加载时静默刷新数据（不显示LoadingIndicator）
-        if (!isFirstLoad) {
+        if (!isFirstLoad && isDataLoaded) {
             loadOrders(showLoading = false)
         }
     }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/decelerate_interpolator">
+
+    <!-- 简单的淡入动画，避免多重效果 -->
+    <alpha
+        android:duration="400"
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0" />
+
+    <!-- 轻微的向上移动，创造自然的入场效果 -->
+    <translate
+        android:duration="400"
+        android:fromYDelta="30dp"
+        android:toYDelta="0dp" />
+
+</set>

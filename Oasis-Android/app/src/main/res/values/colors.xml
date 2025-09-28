@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3 Light Theme Colors -->
-    <!-- Primary -->
-    <color name="md_theme_light_primary">#0061A4</color>
+    <!-- Material 3 Light Theme Colors - Optimized -->
+    <!-- Primary - Enhanced blue with better contrast -->
+    <color name="md_theme_light_primary">#1565C0</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#D1E4FF</color>
-    <color name="md_theme_light_onPrimaryContainer">#001D36</color>
+    <color name="md_theme_light_primaryContainer">#E3F2FD</color>
+    <color name="md_theme_light_onPrimaryContainer">#0D47A1</color>
     
-    <!-- Secondary -->
-    <color name="md_theme_light_secondary">#535F70</color>
+    <!-- Secondary - Warmer tone for better harmony -->
+    <color name="md_theme_light_secondary">#5D6B7A</color>
     <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#D7E3F7</color>
-    <color name="md_theme_light_onSecondaryContainer">#101C2B</color>
+    <color name="md_theme_light_secondaryContainer">#E1F5FE</color>
+    <color name="md_theme_light_onSecondaryContainer">#263238</color>
     
-    <!-- Surface -->
-    <color name="md_theme_light_surface">#FEFBFF</color>
-    <color name="md_theme_light_onSurface">#1B1B1F</color>
-    <color name="md_theme_light_surfaceVariant">#DFE2EB</color>
-    <color name="md_theme_light_onSurfaceVariant">#43474E</color>
-    <color name="md_theme_light_surfaceContainer">#F3F4FA</color>
+    <!-- Surface - Improved readability -->
+    <color name="md_theme_light_surface">#FAFAFA</color>
+    <color name="md_theme_light_onSurface">#212121</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#424242</color>
+    <color name="md_theme_light_surfaceContainer">#F8F9FA</color>
     
-    <!-- Material 3 Dark Theme Colors -->
-    <!-- Primary -->
-    <color name="md_theme_dark_primary">#9ECAFF</color>
-    <color name="md_theme_dark_onPrimary">#003258</color>
-    <color name="md_theme_dark_primaryContainer">#00497D</color>
-    <color name="md_theme_dark_onPrimaryContainer">#D1E4FF</color>
+    <!-- Material 3 Dark Theme Colors - Optimized -->
+    <!-- Primary - Softer blue for dark mode -->
+    <color name="md_theme_dark_primary">#90CAF9</color>
+    <color name="md_theme_dark_onPrimary">#0D47A1</color>
+    <color name="md_theme_dark_primaryContainer">#1565C0</color>
+    <color name="md_theme_dark_onPrimaryContainer">#E3F2FD</color>
     
-    <!-- Secondary -->
-    <color name="md_theme_dark_secondary">#BBC7DB</color>
-    <color name="md_theme_dark_onSecondary">#253140</color>
-    <color name="md_theme_dark_secondaryContainer">#3B4858</color>
-    <color name="md_theme_dark_onSecondaryContainer">#D7E3F7</color>
+    <!-- Secondary - Better contrast in dark mode -->
+    <color name="md_theme_dark_secondary">#B0BEC5</color>
+    <color name="md_theme_dark_onSecondary">#263238</color>
+    <color name="md_theme_dark_secondaryContainer">#37474F</color>
+    <color name="md_theme_dark_onSecondaryContainer">#E1F5FE</color>
     
-    <!-- Surface -->
-    <color name="md_theme_dark_surface">#10131A</color>
-    <color name="md_theme_dark_onSurface">#E3E2E6</color>
-    <color name="md_theme_dark_surfaceVariant">#43474E</color>
-    <color name="md_theme_dark_onSurfaceVariant">#C3C7CF</color>
-    <color name="md_theme_dark_surfaceContainer">#1E2129</color>
+    <!-- Surface - Enhanced dark theme -->
+    <color name="md_theme_dark_surface">#121212</color>
+    <color name="md_theme_dark_onSurface">#E0E0E0</color>
+    <color name="md_theme_dark_surfaceVariant">#2C2C2C</color>
+    <color name="md_theme_dark_onSurfaceVariant">#BDBDBD</color>
+    <color name="md_theme_dark_surfaceContainer">#1E1E1E</color>
     
     <!-- Basic Colors -->
     <color name="black">#FF000000</color>
@@ -60,9 +60,9 @@
     <color name="status_success">#4CAF50</color>
     <color name="status_error">#F44336</color>
     
-    <!-- Legacy colors for compatibility -->
-    <color name="purple_500">#6200EE</color>
-    <color name="teal_200">#03DAC5</color>
+    <!-- Legacy colors for compatibility - Updated -->
+    <color name="purple_500">#1565C0</color>
+    <color name="teal_200">#90CAF9</color>
     <color name="gray_600">#757575</color>
     
     <!-- Additional colors for UI -->

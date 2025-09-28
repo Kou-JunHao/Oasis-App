@@ -12,15 +12,24 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
     
-    <!-- Theme with dynamic colors disabled -->
+    <!-- Theme with dynamic colors disabled - Optimized -->
     <style name="Theme.LifeWater.NoMonet" parent="Theme.Material3.DayNight">
-        <!-- Use static colors -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <!-- Use optimized static colors -->
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
+        <item name="colorSurfaceContainer">@color/md_theme_light_surfaceContainer</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorSurfaceVariant</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
@@ -32,11 +41,12 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
     
-    <!-- NoActionBar theme with dynamic colors disabled -->
+    <!-- NoActionBar theme with dynamic colors disabled - Optimized -->
     <style name="Theme.LifeWater.NoMonet.NoActionBar" parent="Theme.LifeWater.NoMonet">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
     </style>
 </resources>

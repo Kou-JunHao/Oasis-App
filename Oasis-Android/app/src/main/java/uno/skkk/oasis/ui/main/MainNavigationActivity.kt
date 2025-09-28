@@ -59,6 +59,10 @@ class MainNavigationActivity : BaseActivity() {
         
         // 禁用ViewPager的滑动，只通过底部导航切换
         binding.viewPager.isUserInputEnabled = false
+        
+        // 设置offscreenPageLimit为1，这是最小允许值
+        // 结合LazyLoadFragment的懒加载机制，可以避免不必要的数据加载
+        binding.viewPager.offscreenPageLimit = 1
     }
     
     private fun setupBottomNavigation() {

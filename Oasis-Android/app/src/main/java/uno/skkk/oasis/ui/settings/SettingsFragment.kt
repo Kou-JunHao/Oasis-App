@@ -1,24 +1,35 @@
 package uno.skkk.oasis.ui.settings
 
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import uno.skkk.oasis.BuildConfig
 import uno.skkk.oasis.LifeWaterApplication
 import uno.skkk.oasis.R
 import uno.skkk.oasis.data.repository.AppRepository
 import uno.skkk.oasis.databinding.FragmentSettingsBinding
+import uno.skkk.oasis.databinding.DialogAppInfoBinding
 import uno.skkk.oasis.ui.components.UnifiedTopBar
+import uno.skkk.oasis.ui.base.LazyLoadFragment
 import uno.skkk.oasis.ui.login.LoginActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import dagger.hilt.android.AndroidEntryPoint
 
-class SettingsFragment : Fragment() {
+@AndroidEntryPoint
+class SettingsFragment : LazyLoadFragment() {
     
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -40,6 +51,15 @@ class SettingsFragment : Fragment() {
         appRepository = AppRepository.getInstance(requireContext())
         
         setupTopBar()
+        // 移除立即数据加载，改为懒加载机制
+        // setupUserInfo(), setupAppearanceSettings(), setupAboutSection() 将在 loadData() 中调用
+    }
+    
+    /**
+     * 实现懒加载数据加载方法
+     * 只有当Fragment对用户可见时才会调用此方法
+     */
+    override fun loadData() {
         setupUserInfo()
         setupAppearanceSettings()
         setupAboutSection()
@@ -115,12 +135,74 @@ class SettingsFragment : Fragment() {
                 // 重新创建Activity以应用新主题
                 requireActivity().recreate()
             }
+            
+            // 设置跟随系统开关
+            val isFollowSystemEnabled = LifeWaterApplication.isFollowSystemEnabled(requireContext())
+            switchFollowSystem.isChecked = isFollowSystemEnabled
+            
+            switchFollowSystem.setOnCheckedChangeListener { _, isChecked ->
+                // 设置跟随系统主题
+                LifeWaterApplication.setFollowSystemEnabled(requireContext(), isChecked)
+            }
         }
     }
     
     private fun setupAboutSection() {
-        // 关于部分的信息已经在布局文件中硬编码
-        // 如果需要动态设置版本号，可以在这里添加逻辑
+        // 设置关于卡片点击事件
+        binding.cardAbout.setOnClickListener {
+            showAppInfoDialog()
+        }
+        
+        // 设置开源许可证卡片点击事件
+        binding.cardOpenSourceLicenses.setOnClickListener {
+            OpenSourceLicensesActivity.start(requireContext())
+        }
+    }
+    
+    private fun showAppInfoDialog() {
+        val dialogBinding = DialogAppInfoBinding.inflate(layoutInflater)
+        
+        // 获取应用信息
+        val packageInfo = try {
+            requireContext().packageManager.getPackageInfo(requireContext().packageName, 0)
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+        
+        // 设置应用信息
+        dialogBinding.apply {
+            tvAppName.text = getString(R.string.app_name)
+            tvVersion.text = packageInfo?.versionName ?: "1.0.0"
+            
+            // 设置真实构建时间
+            tvBuildTime.text = BuildConfig.BUILD_DATE
+            
+            tvAuthor.text = "Kou-JunHao"
+            tvProjectUrl.text = "GitHub"
+            
+            // 设置项目地址点击事件
+            tvProjectUrl.setOnClickListener {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Kou-JunHao/Oasis-App"))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // 如果无法打开浏览器，可以显示一个提示
+                    android.util.Log.e("SettingsFragment", "无法打开项目地址", e)
+                }
+            }
+        }
+        
+        // 创建并显示对话框
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogBinding.root)
+            .create()
+        
+        // 设置关闭按钮点击事件
+        dialogBinding.btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
     }
     
     private fun logout() {

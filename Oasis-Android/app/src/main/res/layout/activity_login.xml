@@ -8,6 +8,27 @@
     android:fitsSystemWindows="true"
     tools:context=".ui.login.LoginActivity">
 
+    <!-- 背景装饰元素 -->
+    <View
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="-100dp"
+        android:layout_marginEnd="-100dp"
+        android:background="@drawable/bg_gradient_circle"
+        android:alpha="0.1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginStart="-75dp"
+        android:layout_marginBottom="-75dp"
+        android:background="@drawable/bg_gradient_circle"
+        android:alpha="0.08"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <!-- 主内容容器 - 垂直居中 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/contentContainer"
@@ -26,34 +47,39 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="?attr/colorPrimaryContainer"
-            app:cardCornerRadius="28dp"
+            app:cardCornerRadius="32dp"
             app:cardElevation="0dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="?attr/colorPrimary"
+            app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="32dp">
+            android:padding="40dp">
 
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="iLife798"
-                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                android:text="Oasis"
+                android:textAppearance="?attr/textAppearanceHeadlineLarge"
                 android:textColor="?attr/colorOnPrimaryContainer"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:letterSpacing="0.02" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="设备控制助手"
+                android:layout_marginTop="12dp"
+                android:text="去除多余的&quot;水分&quot;"
                 android:textAppearance="?attr/textAppearanceBodyLarge"
-                android:textColor="?attr/colorOnPrimaryContainer" />
+                android:textColor="?attr/colorOnPrimaryContainer"
+                android:alpha="0.9"
+                android:letterSpacing="0.01" />
 
         </LinearLayout>
 
@@ -64,36 +90,54 @@
             android:id="@+id/cardForm"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="4dp"
+            android:layout_marginTop="32dp"
+            app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="0dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cardHeader">
+            app:layout_constraintTop_toBottomOf="@id/cardHeader"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="32dp">
+
+            <!-- 登录标题 -->
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:text="欢迎回来"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold" />
 
             <!-- 手机号输入 -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilPhone"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="手机号码"
-                app:endIconMode="clear_text"
-                app:startIconDrawable="@drawable/ic_phone">
+                    android:id="@+id/tilPhone"
+                    style="@style/Widget.App.TextInputLayout.FilledBox.NoUnderline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="手机号"
+                    app:endIconMode="clear_text"
+                    app:startIconDrawable="@drawable/ic_phone"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusBottomEnd="16dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPhone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="phone"
-                    android:maxLength="11" />
+                    android:maxLength="11"
+                    android:textSize="16sp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -101,39 +145,57 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilCaptcha"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="图形验证码"
-                    app:endIconMode="clear_text"
-                    app:startIconDrawable="@drawable/ic_security">
+                        android:id="@+id/tilCaptcha"
+                        style="@style/Widget.App.TextInputLayout.FilledBox.NoUnderline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="12dp"
+                        android:hint="图形验证码"
+                        app:endIconMode="clear_text"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etCaptcha"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="number"
-                        android:maxLength="6" />
+                        android:maxLength="6"
+                        android:textSize="16sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <ImageView
-                    android:id="@+id/ivCaptcha"
-                    android:layout_width="120dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_captcha"
-                    android:contentDescription="图形验证码"
-                    android:scaleType="fitCenter"
-                    android:adjustViewBounds="true"
-                    android:padding="4dp" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="?attr/colorOutline"
+                    app:strokeWidth="1dp">
+
+                    <ImageView
+                        android:id="@+id/ivCaptcha"
+                        android:layout_width="120dp"
+                        android:layout_height="56dp"
+                        android:contentDescription="图形验证码"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
@@ -141,25 +203,30 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginBottom="32dp"
                 android:orientation="horizontal">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilSmsCode"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="短信验证码"
-                    app:endIconMode="clear_text"
-                    app:startIconDrawable="@drawable/ic_message">
+                        android:id="@+id/tilSmsCode"
+                        style="@style/Widget.App.TextInputLayout.FilledBox.NoUnderline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="12dp"
+                        android:hint="短信验证码"
+                        app:endIconMode="clear_text"
+                        app:boxCornerRadiusTopStart="16dp"
+                        app:boxCornerRadiusTopEnd="16dp"
+                        app:boxCornerRadiusBottomStart="16dp"
+                        app:boxCornerRadiusBottomEnd="16dp">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etSmsCode"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="number"
-                        android:maxLength="6" />
+                        android:maxLength="6"
+                        android:textSize="16sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -167,10 +234,13 @@
                     android:id="@+id/btnGetCode"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:minWidth="100dp"
-                    android:text="获取验证码" />
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="16dp"
+                    android:minWidth="120dp"
+                    android:text="获取验证码"
+                    android:textSize="14sp"
+                    app:cornerRadius="16dp"
+                    app:elevation="0dp" />
 
             </LinearLayout>
 
@@ -180,10 +250,12 @@
                 style="@style/Widget.Material3.Button.UnelevatedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="20dp"
                 android:text="登录"
-                android:textSize="16sp" />
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:cornerRadius="20dp"
+                app:elevation="0dp" />
 
         </LinearLayout>
 
@@ -191,16 +263,49 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- MD3E Loading indicator with a container -->
-    <com.google.android.material.loadingindicator.LoadingIndicator
-        android:id="@+id/progressIndicator"
-        style="@style/Widget.App.LoadingIndicator.Contained"
+    <!-- 加载指示器 -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/loadingCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeColor="?attr/colorOutline"
+        app:strokeWidth="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/progressIndicator"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                app:indicatorColor="?attr/colorPrimary"
+                app:trackColor="?attr/colorSurfaceVariant"
+                app:trackThickness="4dp"
+                app:indicatorSize="48dp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="正在登录..."
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -35,11 +35,12 @@ import uno.skkk.oasis.data.model.Device
 import uno.skkk.oasis.data.repository.DeviceIconRepository
 import uno.skkk.oasis.ui.components.UnifiedTopBar
 import uno.skkk.oasis.ui.dialog.DeviceIconSelectorDialog
+import uno.skkk.oasis.ui.base.LazyLoadFragment
 import java.util.regex.Pattern
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DeviceListFragment : Fragment() {
+class DeviceListFragment : LazyLoadFragment() {
     
     private var _binding: FragmentDeviceListBinding? = null
     private val binding get() = _binding!!
@@ -93,6 +94,15 @@ class DeviceListFragment : Fragment() {
         setupSwipeRefresh()
         setupFab()
         observeViewModel()
+        // 移除立即数据加载，改为懒加载机制
+        // loadDevices() 将在 loadData() 中调用
+    }
+    
+    /**
+     * 实现懒加载数据加载方法
+     * 只有当Fragment对用户可见时才会调用此方法
+     */
+    override fun loadData() {
         loadDevices() // 首次加载，显示LoadingIndicator
         isFirstLoad = false
     }
@@ -100,7 +110,7 @@ class DeviceListFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // 只在非首次加载时静默刷新数据（不显示LoadingIndicator）
-        if (!isFirstLoad) {
+        if (!isFirstLoad && isDataLoaded) {
             loadDevices(showLoading = false)
         }
     }

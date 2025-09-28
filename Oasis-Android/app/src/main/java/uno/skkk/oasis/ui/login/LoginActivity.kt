@@ -142,7 +142,7 @@ class LoginActivity : BaseActivity() {
         binding.btnLogin.isEnabled = state.canLogin
         
         // 更新加载状�?
-        binding.progressIndicator.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+        binding.loadingCard.visibility = if (state.isLoading) View.VISIBLE else View.GONE
         
         // 更新获取验证码按钮文�?
         if (state.countdown > 0) {
@@ -184,19 +184,11 @@ class LoginActivity : BaseActivity() {
     }
     
     private fun startEntranceAnimation() {
-        // 为主要UI元素添加入场动画
-        val fadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.disney_fade_in)
+        // 使用简化的入场动画，避免多重动画效果
+        val fadeInAnimation = AnimationUtils.loadAnimation(this, R.anim.simple_fade_in)
         
-        // 延迟启动动画，创建层次感
-        binding.cardHeader.startAnimation(fadeInAnimation)
-        
-        binding.cardForm.postDelayed({
-            binding.cardForm.startAnimation(fadeInAnimation)
-        }, 150)
-        
-        binding.btnLogin.postDelayed({
-            binding.btnLogin.startAnimation(fadeInAnimation)
-        }, 300)
+        // 只对主容器应用动画，确保统一的入场效果
+        binding.contentContainer.startAnimation(fadeInAnimation)
     }
     
     override fun onDestroy() {

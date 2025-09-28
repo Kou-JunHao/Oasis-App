@@ -9,10 +9,37 @@ import uno.skkk.oasis.ui.login.LoginActivity
 
 class MainActivity : BaseActivity() {
     
+    private var disclaimerDialog: DisclaimerDialog? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 检查登录状�?
+        // 首先检查是否已接受免责声明
+        if (!DisclaimerDialog.isDisclaimerAccepted(this)) {
+            showDisclaimerDialog()
+        } else {
+            proceedToNextActivity()
+        }
+    }
+    
+    private fun showDisclaimerDialog() {
+        disclaimerDialog = DisclaimerDialog(this, object : DisclaimerDialog.OnDisclaimerActionListener {
+            override fun onAccepted() {
+                disclaimerDialog = null
+                proceedToNextActivity()
+            }
+            
+            override fun onCancelled() {
+                disclaimerDialog = null
+                // 用户取消，退出应用
+                finishAffinity()
+            }
+        })
+        disclaimerDialog?.show()
+    }
+    
+    private fun proceedToNextActivity() {
+        // 检查登录状态
         val repository = AppRepository.getInstance(this)
         val isLoggedIn = repository.isLoggedIn()
         
@@ -25,5 +52,10 @@ class MainActivity : BaseActivity() {
         }
         
         finish()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        disclaimerDialog?.dismiss()
     }
 }

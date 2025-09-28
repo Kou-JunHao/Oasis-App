@@ -1,6 +1,6 @@
 # Oasis App - Anti-Ad <details><summary>~~i████798~~</summary>iLife798</details> 项目
 
-这是一个针对<details><summary>~~i████798~~</summary>iLife798</details>智能家居设备用户的去广告解决方案项目，包含 Android 应用和 Web 应用两个实现版本。
+这是一个针对<details><summary>~~i████798~~</summary>iLife798</details>用户的去广告解决方案项目，包含 Android 应用和 Web 应用两个实现版本。
 
 ## 项目结构
 
@@ -34,7 +34,7 @@
 
 ## 项目目标
 
-本项目旨在为<details><summary>~~i████798~~</summary>iLife798</details>智能家居设备用户提供一个无广告的控制界面，解决原厂应用广告过多的问题。
+本项目旨在为<details><summary>~~i████798~~</summary>iLife798</details>用户提供一个无广告的控制界面，解决原厂应用广告过多的问题。
 
 ### 主要功能
 - 设备控制和管理
@@ -85,33 +85,19 @@ npm run dev
 
 本项目仅供学习和研究使用，不用于商业目的。所有后果由使用者承担，与项目作者无关。
 
-## 许可证
+## 第三方许可证
 
-本项目采用 MIT 许可证开源。
+本项目使用了多个开源库，详细的第三方许可证信息请参见：
+- [第三方许可证列表](THIRD_PARTY_LICENSES.md)
+- [许可证文件目录](LICENSES/)
 
-```
-MIT License
-
-Copyright (c) 2024 Oasis App Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+主要使用的开源库包括：
+- **AndroidX 系列库** - Apache License 2.0
+- **Material Design Components** - Apache License 2.0
+- **Retrofit & OkHttp** - Apache License 2.0
+- **Glide** - BSD License
+- **Dagger Hilt** - Apache License 2.0
+- **其他库** - 详见第三方许可证文件
 
 ## 联系方式
 
@@ -119,4 +105,4 @@ SOFTWARE.
 
 ---
 
-**注意**: 请确保在使用本项目前了解相关法律法规，并承担相应责任。
+**注意**: 请确保在使用本项目前了解相关法律法规，并承担相应责任。本应用承诺不会使用用户个人数据，也不会将用户数据分享给任何第三方。均使用原应用的API。

@@ -70,6 +70,12 @@
             android:exported="false"
             android:theme="@style/Theme.LifeWater.NoActionBar" />
 
+        <!-- 开源许可证Activity -->
+        <activity
+            android:name=".ui.settings.OpenSourceLicensesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LifeWater.NoActionBar" />
+
         <!-- 添加设备Activity -->
         <activity
             android:name=".ui.device.AddDeviceActivity"

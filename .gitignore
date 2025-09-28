@@ -1,0 +1,33 @@
+# IDE配置文件
+.idea/
+.vscode/
+*.iml
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+*.bak
+
+# 编辑器备份文件
+*~
+*.swp
+*.swo
+
+# 压缩文件
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# 其他
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

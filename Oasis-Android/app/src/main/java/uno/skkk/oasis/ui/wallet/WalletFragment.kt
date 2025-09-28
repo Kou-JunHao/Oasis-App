@@ -15,11 +15,12 @@ import uno.skkk.oasis.R
 import uno.skkk.oasis.databinding.FragmentWalletBinding
 import uno.skkk.oasis.ui.components.UnifiedTopBar
 import uno.skkk.oasis.ui.recharge.RechargeActivity
+import uno.skkk.oasis.ui.base.LazyLoadFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class WalletFragment : Fragment() {
+class WalletFragment : LazyLoadFragment() {
     
     private var _binding: FragmentWalletBinding? = null
     private val binding get() = _binding!!
@@ -42,6 +43,15 @@ class WalletFragment : Fragment() {
         setupTopBar()
         setupUI()
         observeViewModel()
+        // 移除立即数据加载，改为懒加载机制
+        // loadWalletData() 将在 loadData() 中调用
+    }
+    
+    /**
+     * 实现懒加载数据加载方法
+     * 只有当Fragment对用户可见时才会调用此方法
+     */
+    override fun loadData() {
         loadWalletData() // 首次加载，显示LoadingIndicator
         isFirstLoad = false
     }
@@ -49,7 +59,7 @@ class WalletFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // 页面切换时静默刷新钱包数据，不显示LoadingIndicator
-        if (!isFirstLoad) {
+        if (!isFirstLoad && isDataLoaded) {
             loadWalletData(showLoading = false)
         }
     }
