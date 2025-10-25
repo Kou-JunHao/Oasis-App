@@ -1,6 +1,6 @@
 # Oasis App - Anti-Ad <details><summary>~~i████798~~</summary>iLife798</details> 项目
 
-这是一个针对<details><summary>~~i████798~~</summary>iLife798</details>用户的去广告解决方案项目，包含 Android 应用和 Web 应用两个实现版本。
+这是一个针对<details><summary>~~i████798~~</summary>iLife798</details>用户的去广告解决方案项目
 
 ## 项目结构
 
@@ -18,19 +18,6 @@
 - 优化的性能和用户界面
 - 支持现代 Android 设备
 
-### 🌐 anti-ad-ilife-798-web
-位于 `anti-ad-ilife-798-web/` 文件夹下，这是**原项目的网页实现版本**。
-
-- **框架**: Next.js 15.0.3
-- **开发语言**: TypeScript
-- **UI 框架**: Ant Design + Tailwind CSS
-- **特性**: 支持 PWA (Progressive Web App)
-
-#### 主要特性
-- 跨平台 Web 应用
-- PWA 支持，可安装到设备
-- 响应式设计，支持移动端和桌面端
-- 现代化的用户界面
 
 ## 项目目标
 
@@ -40,7 +27,6 @@
 - 设备控制和管理
 - 去除原厂应用中的广告内容
 - 提供清洁、简洁的用户界面
-- 支持多平台访问（Android 原生 + Web）
 
 ## 快速开始
 
@@ -50,12 +36,6 @@ cd Oasis-Android
 ./gradlew build
 ```
 
-### Web 应用 (anti-ad-ilife-798-web)
-```bash
-cd anti-ad-ilife-798-web
-npm install
-npm run dev
-```
 
 ## 技术栈
 
@@ -66,12 +46,7 @@ npm run dev
 - **依赖注入**: Hilt
 - **UI**: ViewBinding + Material Design
 
-### Web 应用
-- **框架**: Next.js 15.0.3
-- **语言**: TypeScript
-- **UI**: Ant Design + Tailwind CSS
-- **PWA**: next-pwa
-- **图标**: React Icons
+
 
 ## 贡献指南
 
@@ -79,7 +54,6 @@ npm run dev
 
 ### 开发环境要求
 - **Android**: Android Studio Arctic Fox 或更高版本
-- **Web**: Node.js 18+ 和 npm/pnpm
 
 ## 免责声明
 
@@ -105,4 +79,6 @@ npm run dev
 
 ---
 
-**注意**: 请确保在使用本项目前了解相关法律法规，并承担相应责任。本应用承诺不会使用用户个人数据，也不会将用户数据分享给任何第三方。均使用原应用的API。
+感谢原项目 [anti-ad-ilife-798](https://github.com/KynixInHK/anti-ad-ilife-798) 提供的灵感和技术支持。
+
+**注意**: 请确保在使用本项目前了解相关法律法规，并承担相应责任。本应用承诺不会远程传输您的个人数据，也不会将用户数据分享给任何第三方。均使用原应用的API。
