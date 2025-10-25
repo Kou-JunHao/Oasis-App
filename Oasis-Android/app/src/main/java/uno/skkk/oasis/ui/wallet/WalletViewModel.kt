@@ -124,7 +124,7 @@ class WalletViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val result = walletRepository.createRechargeOrder(productId, count)
+                val result = walletRepository.createRechargeOrder(productId, count, "")
                 callback(result)
             } catch (e: Exception) {
                 callback(Result.failure(e))

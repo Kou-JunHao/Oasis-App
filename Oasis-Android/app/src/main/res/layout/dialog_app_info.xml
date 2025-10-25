@@ -63,7 +63,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Anti-Ad iLife798 项目"
+                android:text="Oasis-App项目"
                 android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:gravity="center" />
@@ -245,38 +245,97 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
+            android:orientation="vertical"
             android:layout_marginTop="16dp">
 
-            <!-- GitHub Button -->
-              <com.google.android.material.button.MaterialButton
-                  android:id="@+id/tvProjectUrl"
-                  style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                  android:layout_width="0dp"
-                  android:layout_height="56dp"
-                  android:layout_weight="1"
-                  android:layout_marginEnd="8dp"
-                  android:text="访问 GitHub"
-                  android:textAppearance="?attr/textAppearanceButton"
-                  android:textAllCaps="false"
-                  app:icon="@drawable/ic_open_in_new_24"
-                  app:iconGravity="textStart"
-                  app:iconPadding="8dp"
-                  app:cornerRadius="16dp" />
+            <!-- Bottom Buttons Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
 
-              <!-- Close Button -->
-              <com.google.android.material.button.MaterialButton
-                  android:id="@+id/btnClose"
-                  style="@style/Widget.MaterialComponents.Button"
-                  android:layout_width="0dp"
-                  android:layout_height="56dp"
-                  android:layout_weight="1"
-                  android:layout_marginStart="8dp"
-                  android:text="关闭"
-                  android:textAppearance="?attr/textAppearanceButton"
-                  android:textAllCaps="false"
-                  app:cornerRadius="16dp" />
+                <!-- GitHub Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorOutline">
+
+                    <LinearLayout
+                        android:id="@+id/btnGitHub"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_github_24"
+                            android:layout_marginEnd="8dp"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="GitHub"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Close Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="?attr/colorOutline">
+
+                    <LinearLayout
+                        android:id="@+id/btnClose"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_close_24"
+                            android:layout_marginEnd="8dp"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="关闭"
+                            android:textSize="14sp"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
 
         </LinearLayout>
 

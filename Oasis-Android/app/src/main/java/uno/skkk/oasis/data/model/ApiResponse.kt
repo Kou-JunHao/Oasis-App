@@ -306,17 +306,87 @@ data class WalletData(
     val currency: String = "CNY", // 货币类型
     
     @SerializedName("frozen")
-    val frozen: Double = 0.0 // 冻结金额
+    val frozen: Double = 0.0, // 冻结金额
+    
+    @SerializedName("ep")
+    val ep: WalletEndpoint? = null, // 钱包端点信息
+    
+    @SerializedName("id")
+    val id: String? = null, // 钱包ID
+    
+    @SerializedName("name")
+    val name: String? = null, // 钱包名称
+    
+    @SerializedName("owner")
+    val owner: WalletOwner? = null, // 钱包所有者信息
+    
+    @SerializedName("rtime")
+    val rtime: String? = null, // 创建时间
+    
+    @SerializedName("utime")
+    val utime: String? = null // 更新时间
 ) {
-    // 获取实际显示的余额，优先使用total字段
+    // 获取实际显示的余额，优先使用olCash字段（用户要求）
     fun getDisplayBalance(): Double {
-        return if (total > 0.0) {
-            total
-        } else {
-            olCash ?: balance
-        }
+        return olCash ?: total.takeIf { it > 0.0 } ?: balance
     }
 }
+
+/**
+ * 钱包端点信息
+ */
+data class WalletEndpoint(
+    @SerializedName("id")
+    val id: String,
+    
+    @SerializedName("name")
+    val name: String,
+    
+    @SerializedName("contact")
+    val contact: WalletContact? = null,
+    
+    @SerializedName("setting")
+    val setting: WalletSetting? = null
+)
+
+/**
+ * 钱包联系人信息
+ */
+data class WalletContact(
+    @SerializedName("name")
+    val name: String,
+    
+    @SerializedName("pn")
+    val pn: String
+)
+
+/**
+ * 钱包设置信息
+ */
+data class WalletSetting(
+    @SerializedName("olcharge")
+    val olcharge: Int = 0,
+    
+    @SerializedName("olrefund")
+    val olrefund: Int = 0,
+    
+    @SerializedName("thirdPay")
+    val thirdPay: Int = 0
+)
+
+/**
+ * 钱包所有者信息
+ */
+data class WalletOwner(
+    @SerializedName("id")
+    val id: String,
+    
+    @SerializedName("name")
+    val name: String,
+    
+    @SerializedName("pn")
+    val pn: String
+)
 
 /**
  * 钱包响应数据结构 - 匹配实际API响应
@@ -337,9 +407,42 @@ data class WalletResponseData(
     @SerializedName("refund")
     val refund: Int = 0
 ) {
-    // 获取主要的钱包数据
+    // 获取主要的钱包数据 - 修复：优先使用aw，确保充值到正确钱包
     fun getPrimaryWalletData(): WalletData? {
-        return aw ?: eps?.firstOrNull()
+        // 优先返回aw（主钱包），只有在aw为null且eps不为空时才使用eps的第一个
+        // 但要确保eps中选择的是正确的钱包（通常是余额最高或最近使用的）
+        return aw ?: eps?.maxByOrNull { it.getDisplayBalance() }
+    }
+    
+    // 获取所有可用的钱包数据
+    fun getAllWalletData(): List<WalletData> {
+        val wallets = mutableListOf<WalletData>()
+        aw?.let { wallets.add(it) }
+        eps?.let { wallets.addAll(it) }
+        return wallets
+    }
+    
+    // 根据钱包ID获取特定钱包（如果API支持钱包ID的话）
+    fun getWalletById(walletId: String?): WalletData? {
+        if (walletId.isNullOrEmpty()) return getPrimaryWalletData()
+        
+        // 首先检查主钱包aw是否匹配（如果有ID标识的话）
+        // 由于API响应中的WalletData没有ID字段，我们需要通过其他方式匹配
+        // 这里先返回主钱包作为默认值，实际项目中可能需要根据API文档调整
+        
+        // 如果eps中有多个钱包，可以尝试通过余额或其他特征匹配
+        // 但由于API响应结构限制，目前只能返回主钱包
+        return getPrimaryWalletData()
+    }
+    
+    // 根据钱包索引获取钱包数据（用于多钱包场景）
+    fun getWalletByIndex(index: Int): WalletData? {
+        val allWallets = getAllWalletData()
+        return if (index >= 0 && index < allWallets.size) {
+            allWallets[index]
+        } else {
+            getPrimaryWalletData()
+        }
     }
 }
 

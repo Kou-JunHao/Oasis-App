@@ -14,12 +14,16 @@
         android:layout_height="wrap_content"
         android:background="?attr/colorSurfaceContainer"
         android:elevation="4dp"
+        android:minHeight="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="?attr/colorOnSurface"
         app:title="设置"
-        app:titleTextColor="?attr/colorOnSurface" />
+        app:titleTextAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+        app:titleTextColor="?attr/colorOnSurface"
+        style="@style/Widget.Material3.Toolbar" />
 
     <ScrollView
         android:layout_width="0dp"
@@ -139,7 +143,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="@string/version_text"
+                        android:text="版本 1.1.0"
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 

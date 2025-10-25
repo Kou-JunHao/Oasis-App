@@ -44,10 +44,10 @@ class RechargeProductAdapter(
 
         fun bind(product: Product, isSelected: Boolean) {
             // 设置产品名称
-            binding.textProductName.text = product.name
+            binding.tvProductName.text = product.name
             
             // 设置金额
-            binding.textAmount.text = "¥${String.format("%.0f", product.currentPrice)}"
+            binding.tvProductPrice.text = "¥${String.format("%.0f", product.currentPrice)}"
             
             // 处理优惠信息
             var hasOffers = false

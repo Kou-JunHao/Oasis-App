@@ -13,7 +13,10 @@ import uno.skkk.oasis.data.model.PaymentChannelsResponse
 import uno.skkk.oasis.data.model.Product
 import uno.skkk.oasis.data.model.RechargeAmount
 import uno.skkk.oasis.data.model.RechargeOrder
+import uno.skkk.oasis.data.model.Device
+import uno.skkk.oasis.data.model.WalletInfo
 import uno.skkk.oasis.data.repository.WalletRepository
+import uno.skkk.oasis.data.repository.AppRepository
 import uno.skkk.oasis.data.TokenManager
 import javax.inject.Inject
 import kotlin.Result
@@ -21,6 +24,7 @@ import kotlin.Result
 @HiltViewModel
 class RechargeViewModel @Inject constructor(
     private val walletRepository: WalletRepository,
+    private val appRepository: AppRepository,
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
@@ -38,8 +42,15 @@ class RechargeViewModel @Inject constructor(
     private val _alipayPaymentData = MutableStateFlow<AlipayPaymentData?>(null)
     val alipayPaymentData: StateFlow<AlipayPaymentData?> = _alipayPaymentData.asStateFlow()
 
+    private val _deviceList = MutableStateFlow<List<Device>>(emptyList())
+    val deviceList: StateFlow<List<Device>> = _deviceList.asStateFlow()
+
+    private val _walletList = MutableStateFlow<List<WalletInfo>>(emptyList())
+    val walletList: StateFlow<List<WalletInfo>> = _walletList.asStateFlow()
+
     init {
         loadRechargeProducts()
+        loadDeviceList()
     }
 
     /**
@@ -106,7 +117,7 @@ class RechargeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            walletRepository.createRechargeOrder(productId, count).fold(
+            walletRepository.createRechargeOrder(productId, count, "").fold(
                 onSuccess = { rechargeOrder: RechargeOrder ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -122,6 +133,133 @@ class RechargeViewModel @Inject constructor(
                     )
                 }
             )
+        }
+    }
+
+    /**
+     * 加载设备列表
+     */
+    fun loadDeviceList() {
+        viewModelScope.launch {
+            val token = tokenManager.getToken()
+            if (token.isNullOrEmpty()) {
+                Log.e("RechargeViewModel", "Token为空，无法加载设备列表")
+                return@launch
+            }
+
+            try {
+                val result = appRepository.getDeviceList()
+                result.fold(
+                    onSuccess = { deviceListData ->
+                        _deviceList.value = deviceListData.devices
+                        // 从设备列表中提取钱包信息
+                        extractWalletsFromDevices(deviceListData.devices)
+                        Log.d("RechargeViewModel", "设备列表加载成功，设备数量: ${deviceListData.devices.size}")
+                    },
+                    onFailure = { exception ->
+                        Log.e("RechargeViewModel", "设备列表加载失败", exception)
+                        _deviceList.value = emptyList()
+                        _walletList.value = emptyList()
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("RechargeViewModel", "设备列表加载异常", e)
+                _deviceList.value = emptyList()
+                _walletList.value = emptyList()
+            }
+        }
+    }
+
+    /**
+     * 从设备列表中提取钱包信息并去重
+     */
+    private fun extractWalletsFromDevices(devices: List<Device>) {
+        val walletMap = mutableMapOf<String, WalletInfo>()
+        
+        devices.forEach { device ->
+            device.ep?.let { endpoint ->
+                val walletId = endpoint.id
+                val walletName = endpoint.name ?: "未知钱包"
+                
+                if (walletId.isNotEmpty()) {
+                    if (walletMap.containsKey(walletId)) {
+                        // 如果钱包已存在，增加设备计数
+                        val existingWallet = walletMap[walletId]!!
+                        walletMap[walletId] = existingWallet.copy(
+                            deviceCount = existingWallet.deviceCount + 1
+                        )
+                    } else {
+                        // 新钱包
+                        walletMap[walletId] = WalletInfo(
+                            id = walletId,
+                            name = walletName,
+                            deviceCount = 1,
+                            balance = 0.0 // 初始余额为0，后续通过API获取
+                        )
+                    }
+                }
+            }
+        }
+        
+        val walletList = walletMap.values.toList()
+        
+        // 为每个钱包获取余额
+        loadWalletBalances(walletList)
+        
+        Log.d("RechargeViewModel", "提取到 ${walletList.size} 个不同的钱包")
+        walletList.forEach { wallet ->
+            Log.d("RechargeViewModel", "钱包: ${wallet.name} (ID: ${wallet.id}), 设备数量: ${wallet.deviceCount}")
+        }
+    }
+    
+    /**
+     * 为钱包列表加载余额信息
+     */
+    private fun loadWalletBalances(wallets: List<WalletInfo>) {
+        viewModelScope.launch {
+            val token = tokenManager.getToken()
+            if (token.isNullOrEmpty()) {
+                // 如果没有token，直接设置钱包列表（余额为0）
+                _walletList.value = wallets
+                return@launch
+            }
+            
+            try {
+                // 获取完整的钱包响应数据
+                val result = walletRepository.getWalletResponseData(token)
+                result.fold(
+                    onSuccess = { walletResponseData ->
+                        val epsWalletData = walletResponseData.eps ?: emptyList()
+                        
+                        Log.d("RechargeViewModel", "获取到钱包数据: ${epsWalletData.size} 个钱包")
+                        
+                        // 更新钱包余额，根据ep.id匹配对应的钱包数据
+                        val updatedWallets = wallets.map { wallet ->
+                            // 在eps数组中查找匹配的钱包数据
+                            val matchingWalletData = epsWalletData.find { walletData ->
+                                walletData.ep?.id == wallet.id
+                            }
+                            
+                            val balance = matchingWalletData?.getDisplayBalance() ?: 0.0
+                            Log.d("RechargeViewModel", "钱包 ${wallet.id} (${wallet.name}) 余额: $balance")
+                            
+                            wallet.copy(balance = balance)
+                        }
+                        
+                        _walletList.value = updatedWallets
+                        Log.d("RechargeViewModel", "钱包余额更新完成")
+                    },
+                    onFailure = { exception ->
+                        Log.e("RechargeViewModel", "获取钱包数据失败: ${exception.message}")
+                        // 失败时将所有钱包余额设为0
+                        _walletList.value = wallets
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e("RechargeViewModel", "钱包余额加载异常", e)
+                // 异常时将所有钱包余额设为0
+                _walletList.value = wallets
+            }
         }
     }
 
@@ -154,7 +292,7 @@ class RechargeViewModel @Inject constructor(
     /**
      * 一键充值 - 整合创建订单、获取支付渠道、发起支付宝支付的完整流程
      */
-    fun oneClickRecharge(productId: String, count: Int = 1) {
+    fun oneClickRecharge(productId: String, count: Int = 1, walletId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
@@ -169,8 +307,8 @@ class RechargeViewModel @Inject constructor(
 
             try {
                 // 第一步：创建充值订单
-                Log.d("RechargeViewModel", "开始创建充值订单，产品ID: $productId")
-                val orderResult = walletRepository.createRechargeOrder(productId, count)
+                Log.d("RechargeViewModel", "开始创建充值订单，产品ID: $productId, 钱包ID: $walletId")
+                val orderResult = walletRepository.createRechargeOrder(productId, count, walletId)
                 
                 orderResult.fold(
                     onSuccess = { rechargeOrder ->

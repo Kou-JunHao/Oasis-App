@@ -12,9 +12,9 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
     
-    <!-- Theme with dynamic colors disabled - Optimized -->
+    <!-- Theme with dynamic colors disabled - Light Mode -->
     <style name="Theme.LifeWater.NoMonet" parent="Theme.Material3.DayNight">
-        <!-- Use optimized static colors -->
+        <!-- Use optimized static colors for light mode -->
         <item name="colorPrimary">@color/md_theme_light_primary</item>
         <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
@@ -28,9 +28,21 @@
         <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
         <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
         <item name="colorSurfaceContainer">@color/md_theme_light_surfaceContainer</item>
-        <!-- Status bar color. -->
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/status_error</item>
+        <item name="colorOnError">@color/white</item>
+        
+        <!-- Status bar -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        
+        <!-- Enable edge-to-edge -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
     </style>
 
     <!-- NoActionBar theme for activities that manage their own toolbar -->

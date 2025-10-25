@@ -44,12 +44,12 @@ class MainNavigationActivity : BaseActivity() {
                 val repository = AppRepository.getInstance(this@MainNavigationActivity)
                 val result = repository.getUserInfo()
                 if (result.isSuccess) {
-                    android.util.Log.d("MainNavigationActivity", "用户信息刷新成功")
+                    // 用户信息刷新成功
                 } else {
-                    android.util.Log.w("MainNavigationActivity", "用户信息刷新失败: ${result.exceptionOrNull()?.message}")
+                    // 用户信息刷新失败
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MainNavigationActivity", "用户信息刷新异常: ${e.message}")
+                // 用户信息刷新异常
             }
         }
     }

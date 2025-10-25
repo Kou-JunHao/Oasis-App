@@ -69,6 +69,34 @@ class WalletRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    /**
+     * 获取完整的钱包响应数据（包含所有钱包信息）
+     */
+    suspend fun getWalletResponseData(token: String): Result<WalletResponseData> {
+        return try {
+            val response = apiService.getWalletBalance(token)
+            if (response.isSuccessful) {
+                val apiResponse = response.body()
+                if (apiResponse?.code == 0 && apiResponse.data != null) {
+                    Result.success(apiResponse.data)
+                } else {
+                    Result.failure(Exception(apiResponse?.message ?: "获取钱包数据失败"))
+                }
+            } else {
+                val errorMessage = when (response.code()) {
+                    401 -> "登录已过期，请重新登录"
+                    403 -> "没有权限访问钱包信息"
+                    404 -> "钱包信息不存在"
+                    500 -> "服务器内部错误"
+                    else -> "网络请求失败: ${response.code()}"
+                }
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
     
     /**
      * 获取充值产品列表（新版本，包含优惠信息）
@@ -146,7 +174,8 @@ class WalletRepository @Inject constructor(
      */
     suspend fun createRechargeOrder(
         productId: String,
-        count: Int = 1
+        count: Int = 1,
+        walletId: String
     ): Result<RechargeOrder> = withContext(Dispatchers.IO) {
         try {
             val token = tokenManager.getToken()
@@ -156,13 +185,14 @@ class WalletRepository @Inject constructor(
                 return@withContext Result.failure(Exception("用户未登录"))
             }
 
+            // 使用传入的钱包ID作为endpoint ID
             val request = BillSaveRequest(
                 cata = 1, // 充值订单分类
                 contact = BillContact(
                     id = user.userId
                 ),
                 ep = BillEndpointRef(
-                    id = user.eid ?: "fd94e5502003000"
+                    id = walletId // 使用传入的设备对应的钱包ID
                 ),
                 note = "充值订单",
                 owner = BillOwnerRef(

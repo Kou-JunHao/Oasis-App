@@ -55,6 +55,5 @@
     <string name="retry">重试</string>
     
     <!-- Version -->
-    <string name="version_placeholder">1.0.1</string>
-    <string name="version_text">版本 1.0.1</string>
+    <string name="version_placeholder">1.1.0</string>
 </resources>

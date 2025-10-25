@@ -4,45 +4,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="6dp"
-    android:minHeight="140dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="2dp"
-    app:strokeColor="?attr/colorOutlineVariant"
-    app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+    android:layout_margin="@dimen/spacing_small"
+    android:minHeight="@dimen/min_touch_target_size"
     android:clickable="true"
     android:focusable="true"
-    style="@style/Widget.Material3.CardView.Outlined">
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/colorSurfaceContainer"
+    app:cardCornerRadius="@dimen/button_corner_radius"
+    app:cardElevation="2dp"
+    app:strokeWidth="2dp"
+    app:strokeColor="@android:color/transparent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center">
+        android:gravity="center"
+        android:padding="@dimen/card_padding"
+        android:minHeight="@dimen/min_touch_target_size">
 
-        <!-- 产品名称 -->
         <TextView
-            android:id="@+id/text_product_name"
+            android:id="@+id/tv_product_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+            android:textSize="@dimen/text_size_medium"
+            android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="4dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            tools:text="充值套餐" />
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_small" />
 
-        <!-- 金额 -->
+        <!-- 产品价格 -->
         <TextView
-            android:id="@+id/text_amount"
+            android:id="@+id/tv_product_price"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-            android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="6dp"
-            tools:text="¥10" />
+            android:textSize="@dimen/text_size_small"
+            android:textColor="?attr/colorPrimary"
+            android:gravity="center" />
 
         <!-- 优惠信息 -->
         <LinearLayout

@@ -15,7 +15,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -27,10 +26,11 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import uno.skkk.oasis.R
 import uno.skkk.oasis.databinding.ActivityQrcodeNewBinding
+import uno.skkk.oasis.ui.base.BaseActivity
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class QRCodeScanActivityNew : AppCompatActivity() {
+class QRCodeScanActivityNew : BaseActivity() {
     
     private lateinit var binding: ActivityQrcodeNewBinding
     private lateinit var cameraExecutor: ExecutorService

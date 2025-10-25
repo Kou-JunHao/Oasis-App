@@ -6,17 +6,17 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import uno.skkk.oasis.R
 import uno.skkk.oasis.data.repository.AppRepository
+import uno.skkk.oasis.ui.base.BaseActivity
 import kotlinx.coroutines.launch
 
 /**
  * 设备控制测试Activity
  * 用于验证与web实现的功能同步
  */
-class DeviceTestActivity : AppCompatActivity() {
+class DeviceTestActivity : BaseActivity() {
     
     private lateinit var repository: AppRepository
     private lateinit var deviceIdInput: EditText

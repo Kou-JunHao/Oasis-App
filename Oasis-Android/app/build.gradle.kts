@@ -16,8 +16,8 @@ android {
         applicationId = "uno.skkk.oasis"
         minSdk = 24  // Android 7.0 (API level 24)
         targetSdk = 36  // Android 16 compatibility
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -90,6 +90,15 @@ dependencies {
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.coordinatorlayout)
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    
+    // Markdown
+    implementation(libs.markwon.core)
+    implementation(libs.markwon.html)
+    implementation(libs.markwon.linkify)
+    implementation(libs.markwon.strikethrough)
+    implementation(libs.markwon.tables)
+    implementation("io.noties.markwon:ext-latex:4.6.2")
+    implementation("io.noties.markwon:simple-ext:4.6.2")
     
     // Camera and QR Code scanning
     implementation("androidx.camera:camera-core:1.3.1")

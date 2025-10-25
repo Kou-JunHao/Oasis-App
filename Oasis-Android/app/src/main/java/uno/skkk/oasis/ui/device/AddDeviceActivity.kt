@@ -38,7 +38,6 @@ class AddDeviceActivity : BaseActivity() {
         supportActionBar?.apply {
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
-            title = "添加设备"
         }
         
         binding.toolbar.setNavigationOnClickListener {
@@ -47,7 +46,7 @@ class AddDeviceActivity : BaseActivity() {
     }
     
     private fun setupUI() {
-        // 设置文本监听�?
+        // 设置文本监听�?
         binding.etDeviceId.addTextChangedListener(createTextWatcher { text ->
             viewModel.updateDeviceId(text)
         })
@@ -60,7 +59,7 @@ class AddDeviceActivity : BaseActivity() {
             viewModel.updateDeviceType(text)
         })
         
-        // 设置按钮点击监听�?
+        // 设置按钮点击监听�?
         binding.btnAddDevice.setOnClickListener {
             viewModel.addDevice()
         }
@@ -72,7 +71,7 @@ class AddDeviceActivity : BaseActivity() {
     }
     
     private fun observeViewModel() {
-        // 观察UI状�?
+        // 观察UI状�?
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 updateUI(state)
@@ -109,7 +108,7 @@ class AddDeviceActivity : BaseActivity() {
     }
     
     private fun updateUI(state: AddDeviceUiState) {
-        // 更新加载状�?
+        // 更新加载状�?
         binding.btnAddDevice.isEnabled = !state.isLoading && state.isInputValid
         binding.progressBar.visibility = if (state.isLoading) {
             android.view.View.VISIBLE
@@ -123,7 +122,7 @@ class AddDeviceActivity : BaseActivity() {
             viewModel.clearError()
         }
         
-        // 处理成功状�?
+        // 处理成功状�?
         if (state.isSuccess) {
             showSuccessAnimation()
         }

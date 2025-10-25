@@ -38,92 +38,87 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp">
 
-        <!-- 钱包余额卡片 -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- 钱包余额卡片 - 支持滑动切换 -->
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="24dp">
+
+            <!-- 钱包计数器 -->
+            <TextView
+                android:id="@+id/tv_wallet_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1/1"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:background="@drawable/bg_rounded_corner"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- ViewPager2 for wallet cards -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp_wallet_cards"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_below="@id/tv_wallet_counter"
+                android:orientation="vertical" />
+
+        </RelativeLayout>
+
+        <!-- 总余额显示卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_total_balance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp"
             app:cardBackgroundColor="?attr/colorPrimaryContainer"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="24dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="钱包余额"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    android:layout_marginBottom="8dp" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_wallet"
+                    android:tint="?attr/colorOnPrimaryContainer"
+                    android:layout_marginEnd="12dp" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="¥"
-                        android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                        android:text="总余额"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnPrimaryContainer"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/textWalletBalance"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="0.00"
-                        android:textAppearance="?attr/textAppearanceHeadlineLarge"
-                        android:textColor="?attr/colorOnPrimaryContainer"
-                        android:textStyle="bold"
-                        android:layout_marginStart="4dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRefreshBalance"
-                        style="@style/Widget.Material3.Button"
+                        android:id="@+id/tv_total_balance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="刷新"
-                        android:textSize="13sp"
-                        android:minHeight="48dp"
-                        android:minWidth="76dp"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:paddingTop="12dp"
-                        android:paddingBottom="12dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:layout_gravity="center_vertical"
-                        app:icon="@drawable/ic_refresh"
-                        app:iconSize="16dp"
-                        app:iconGravity="textStart"
-                        app:iconPadding="6dp"
-                        app:cornerRadius="12dp"
-                        app:backgroundTint="?attr/colorPrimary"
-                        app:iconTint="?attr/colorOnPrimary"
-                        app:rippleColor="?attr/colorOnPrimary" />
+                        android:text="¥0.00"
+                        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                        android:textColor="?attr/colorOnPrimaryContainer"
+                        android:textStyle="bold"
+                        android:layout_marginTop="4dp" />
 
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/textLastUpdateTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="最后更新: --"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="?attr/colorOnPrimaryContainer"
-                    android:alpha="0.8"
-                    android:layout_marginTop="8dp" />
 
             </LinearLayout>
 

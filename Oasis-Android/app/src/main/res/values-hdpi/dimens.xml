@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 高DPI设备的尺寸配置 -->
+    <dimen name="card_margin">18dp</dimen>
+    <dimen name="card_padding">18dp</dimen>
+    <dimen name="button_height">58dp</dimen>
+    <dimen name="button_corner_radius">29dp</dimen>
+    <dimen name="text_size_large">19sp</dimen>
+    <dimen name="text_size_medium">15sp</dimen>
+    <dimen name="text_size_small">13sp</dimen>
+    <dimen name="icon_size">26dp</dimen>
+    <dimen name="toolbar_height">58dp</dimen>
+    <dimen name="content_padding">18dp</dimen>
+</resources>

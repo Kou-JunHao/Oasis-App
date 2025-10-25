@@ -11,7 +11,7 @@ import retrofit2.http.*
 interface ApiService {
     
     /**
-     * 获取图形验证�?
+     * 获取图形验证码?
      */
     @GET("api/v1/captcha/")
     suspend fun getCaptcha(
@@ -20,7 +20,7 @@ interface ApiService {
     ): Response<ResponseBody>
     
     /**
-     * 获取短信验证�?
+     * 获取短信验证码?
      */
     @Headers(
         "Content-Type: application/json",
@@ -148,7 +148,7 @@ interface ApiService {
     ): Response<ApiResponse<AddDeviceResponse>>
     
     /**
-     * 检查设备状�?
+     * 检查设备状态?
      */
     @Headers(
         "Connection: keep-alive",

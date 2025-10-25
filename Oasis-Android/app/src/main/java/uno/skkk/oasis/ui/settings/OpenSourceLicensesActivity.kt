@@ -34,12 +34,8 @@ class OpenSourceLicensesActivity : BaseActivity() {
     }
 
     private fun setupToolbar() {
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "开放源代码许可"
-        }
+        // 设置SimpleTitle
+        binding.simpleTitle.setTitle("开放源代码许可")
     }
 
     private fun setupRecyclerView() {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 平板设备的尺寸配置 -->
+    <dimen name="card_margin">24dp</dimen>
+    <dimen name="card_padding">24dp</dimen>
+    <dimen name="button_height">64dp</dimen>
+    <dimen name="button_corner_radius">32dp</dimen>
+    <dimen name="text_size_large">20sp</dimen>
+    <dimen name="text_size_medium">16sp</dimen>
+    <dimen name="text_size_small">14sp</dimen>
+    <dimen name="icon_size">32dp</dimen>
+    <dimen name="toolbar_height">64dp</dimen>
+    <dimen name="content_padding">24dp</dimen>
+</resources>

@@ -81,12 +81,11 @@
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Device List RecyclerView -->
+                <!-- Device List RecyclerView with fixed height -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvDeviceList"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxHeight="300dp"
+                    android:layout_height="200dp"
                     android:nestedScrollingEnabled="true"
                     android:scrollbars="vertical" />
 
@@ -94,10 +93,9 @@
                 <LinearLayout
                     android:id="@+id/llEmptyState"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="200dp"
                     android:orientation="vertical"
                     android:gravity="center"
-                    android:padding="32dp"
                     android:visibility="gone">
 
                     <ImageView

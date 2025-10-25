@@ -9,6 +9,11 @@
     <!-- 相机权限 - 用于扫码功能 -->
     <uses-permission android:name="android.permission.CAMERA" />
     
+    <!-- 文件下载和安装权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    
     <!-- 相机硬件特性声明 - 设置为非必需以支持Chrome OS等大屏设备 -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -88,6 +93,17 @@
             android:name=".ui.recharge.RechargeActivity"
             android:exported="false"
             android:theme="@style/Theme.LifeWater.NoActionBar" />
+
+        <!-- FileProvider for APK installation -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
