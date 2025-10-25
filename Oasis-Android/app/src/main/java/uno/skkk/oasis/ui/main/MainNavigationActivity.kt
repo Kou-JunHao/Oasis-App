@@ -13,8 +13,10 @@ import uno.skkk.oasis.ui.wallet.WalletFragment
 import uno.skkk.oasis.ui.order.OrderFragment
 import uno.skkk.oasis.ui.settings.SettingsFragment
 import uno.skkk.oasis.data.repository.AppRepository
+import uno.skkk.oasis.utils.GitHubUpdateChecker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import android.util.Log
 
 @AndroidEntryPoint
 class MainNavigationActivity : BaseActivity() {
@@ -33,6 +35,11 @@ class MainNavigationActivity : BaseActivity() {
         
         // 应用启动时获取最新用户信息
         refreshUserInfo()
+        
+        // 延迟检查更新，确保主页面完全加载后再进行
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            checkForUpdatesAfterStartup()
+        }, 2000) // 延迟2秒，确保界面完全加载
     }
     
     /**
@@ -52,6 +59,333 @@ class MainNavigationActivity : BaseActivity() {
                 // 用户信息刷新异常
             }
         }
+    }
+    
+    /**
+     * 主页面加载完成后检查更新
+     */
+    private fun checkForUpdatesAfterStartup() {
+        lifecycleScope.launch {
+            try {
+                Log.d("MainNavigationActivity", "开始检查更新")
+                val updateChecker = GitHubUpdateChecker(this@MainNavigationActivity)
+                val updateInfo = updateChecker.checkForUpdates()
+                
+                if (updateInfo != null) {
+                    Log.d("MainNavigationActivity", "发现新版本: ${updateInfo.tagName}")
+                    // 发现新版本时弹出更新对话框
+                    showUpdateDialog(updateInfo, updateChecker)
+                } else {
+                    Log.d("MainNavigationActivity", "当前已是最新版本")
+                }
+            } catch (e: Exception) {
+                Log.e("MainNavigationActivity", "检查更新失败", e)
+                // 静默失败，不影响用户体验
+            }
+        }
+    }
+    
+    /**
+     * 显示更新对话框
+     */
+    private fun showUpdateDialog(updateInfo: GitHubUpdateChecker.UpdateInfo, updateChecker: GitHubUpdateChecker) {
+        val context = this
+        val sharedPreferencesManager = uno.skkk.oasis.utils.SharedPreferencesManager(context)
+        
+        // 检查是否跳过此版本
+        if (sharedPreferencesManager.isVersionSkipped(updateInfo.tagName)) {
+            Log.d("MainNavigationActivity", "Version ${updateInfo.tagName} is skipped")
+            return
+        }
+        
+        // 创建主容器
+        val mainContainer = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 24)
+        }
+        
+        // 创建ScrollView来包装更新内容，支持长文本滚动
+        val scrollView = android.widget.ScrollView(context).apply {
+            // 设置最大高度，避免对话框过高
+            val displayMetrics = context.resources.displayMetrics
+            val maxHeight = (displayMetrics.heightPixels * 0.4).toInt() // 降低到屏幕高度的40%
+            
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            
+            // 设置最大高度约束，但允许内容自适应
+            maxHeight.let { max ->
+                viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        layoutParams = layoutParams.apply {
+                            if (height > max) {
+                                height = max
+                            }
+                        }
+                    }
+                })
+            }
+            
+            // 启用滚动条
+            isVerticalScrollBarEnabled = true
+            // 设置滚动条样式
+            scrollBarStyle = android.view.View.SCROLLBARS_INSIDE_OVERLAY
+        }
+        
+        // 创建内容容器
+        val contentContainer = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(16, 16, 16, 16)
+            gravity = android.view.Gravity.CENTER_VERTICAL // 垂直居中
+        }
+        
+        // 创建标题TextView
+        val titleTextView = android.widget.TextView(context).apply {
+            text = "更新日志："
+            textSize = 16f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = android.view.Gravity.START // 左对齐
+            // 使用Material Design主题颜色
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)) {
+                setTextColor(typedValue.data)
+            } else {
+                context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+                setTextColor(typedValue.data)
+            }
+            setPadding(0, 0, 0, 16)
+        }
+        
+        // 创建更新内容TextView
+        val contentTextView = android.widget.TextView(context).apply {
+            textSize = 14f
+            gravity = android.view.Gravity.START // 左对齐
+            // 使用Material Design主题颜色
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true)) {
+                setTextColor(typedValue.data)
+            } else {
+                context.theme.resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)
+                setTextColor(typedValue.data)
+            }
+            // 设置行间距以提高可读性
+            setLineSpacing(4f, 1.2f)
+            // 允许文本选择
+            setTextIsSelectable(true)
+            // 设置更新内容
+            text = updateInfo.body ?: "暂无更新内容"
+            setPadding(0, 0, 0, 16)
+            
+            // 添加调试日志
+            Log.d("MainNavigationActivity", "更新内容: '${updateInfo.body}'")
+            Log.d("MainNavigationActivity", "显示文本: '${text}'")
+        }
+        
+        // 创建发布日期TextView
+        val dateTextView = android.widget.TextView(context).apply {
+            textSize = 12f
+            gravity = android.view.Gravity.START // 左对齐
+            // 使用Material Design次要文字颜色
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true)) {
+                setTextColor(typedValue.data)
+            } else {
+                context.theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
+                setTextColor(typedValue.data)
+            }
+            // 格式化发布日期
+            val publishedDate = try {
+                val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault())
+                val outputFormat = java.text.SimpleDateFormat("发布日期：yyyy年MM月dd日", java.util.Locale.getDefault())
+                val date = inputFormat.parse(updateInfo.publishedAt)
+                outputFormat.format(date ?: java.util.Date())
+            } catch (e: Exception) {
+                "发布日期：${updateInfo.publishedAt}"
+            }
+            text = publishedDate
+        }
+        
+        contentContainer.addView(titleTextView)
+        contentContainer.addView(contentTextView)
+        contentContainer.addView(dateTextView)
+        
+        scrollView.addView(contentContainer)
+        mainContainer.addView(scrollView)
+        
+        // 创建进度条容器（初始隐藏）
+        val progressContainer = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            visibility = android.view.View.GONE
+            setPadding(0, 24, 0, 0)
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        val progressText = android.widget.TextView(context).apply {
+            text = "准备下载..."
+            textSize = 12f
+            // 使用Material Design次要文字颜色，确保深浅色模式兼容
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true)) {
+                setTextColor(typedValue.data)
+            } else {
+                // 备用方案：使用系统次要文字颜色
+                context.theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
+                setTextColor(typedValue.data)
+            }
+            gravity = android.view.Gravity.CENTER
+        }
+        
+        val progressBar = android.widget.ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 100
+            progress = 0
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 16
+                bottomMargin = 8
+            }
+            
+            // 设置进度条高度
+            minimumHeight = 24
+            
+            // 使用Material Design颜色
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, typedValue, true)) {
+                progressTintList = android.content.res.ColorStateList.valueOf(typedValue.data)
+            }
+            
+            // 设置背景色
+            if (context.theme.resolveAttribute(androidx.appcompat.R.attr.colorControlHighlight, typedValue, true)) {
+                progressBackgroundTintList = android.content.res.ColorStateList.valueOf(typedValue.data)
+            }
+        }
+        
+        progressContainer.addView(progressText)
+        progressContainer.addView(progressBar)
+        mainContainer.addView(progressContainer)
+        
+        // 添加提示文字
+        val hintText = android.widget.TextView(context).apply {
+            text = "长按稍后提醒跳过此次更新"
+            textSize = 12f
+            // 使用Material Design次要文字颜色，确保深浅色模式兼容
+            val typedValue = android.util.TypedValue()
+            if (context.theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true)) {
+                setTextColor(typedValue.data)
+            } else {
+                // 备用方案：使用系统次要文字颜色
+                context.theme.resolveAttribute(android.R.attr.textColorSecondary, typedValue, true)
+                setTextColor(typedValue.data)
+            }
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 16, 0, 0)
+        }
+        mainContainer.addView(hintText)
+        
+        // 创建对话框
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(context)
+            .setTitle("发现新版本 ${updateInfo.tagName}")
+            .setView(mainContainer)
+            .setPositiveButton("立即更新", null) // 先设为null，稍后手动设置
+            .setNeutralButton("查看详情") { _, _ ->
+                updateChecker.openDownloadPage(updateInfo.htmlUrl)
+            }
+            .setNegativeButton("稍后提醒", null)
+            .create()
+        
+        // 手动设置立即更新按钮的点击事件
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                // 隐藏按钮，只显示进度条
+                positiveButton.visibility = android.view.View.GONE
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).visibility = android.view.View.GONE
+                
+                // 显示进度条
+                progressContainer.visibility = android.view.View.VISIBLE
+                
+                // 使用APK下载管理器直接下载并安装
+                val apkDownloadManager = uno.skkk.oasis.utils.ApkDownloadManager(context)
+                lifecycleScope.launch {
+                    try {
+                        progressText.text = "开始下载..."
+                        
+                        val result = apkDownloadManager.downloadAndInstallApk(
+                            updateInfo.downloadUrl, 
+                            "oasis_${updateInfo.tagName}.apk"
+                        ) { progress ->
+                            // 更新进度
+                            runOnUiThread {
+                                progressBar.progress = progress
+                                when {
+                                    progress < 100 -> {
+                                        progressText.text = "下载中... $progress%"
+                                    }
+                                    progress == 100 -> {
+                                        progressText.text = "下载完成，正在安装..."
+                                    }
+                                }
+                            }
+                        }
+                        
+                        runOnUiThread {
+                            Log.d("MainNavigationActivity", "下载结果处理: isFailure=${result.isFailure}")
+                            if (result.isFailure) {
+                                val error = result.exceptionOrNull()
+                                Log.e("MainNavigationActivity", "下载失败", error)
+                                progressText.text = "下载失败: ${error?.message}"
+                                android.widget.Toast.makeText(context, "下载失败: ${error?.message}", android.widget.Toast.LENGTH_LONG).show()
+                                // 隐藏进度条并恢复按钮
+                                progressContainer.visibility = android.view.View.GONE
+                                positiveButton.visibility = android.view.View.VISIBLE
+                                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).visibility = android.view.View.VISIBLE
+                                Log.d("MainNavigationActivity", "下载失败，按钮已恢复显示")
+                            } else {
+                                Log.d("MainNavigationActivity", "下载成功，开始自动安装")
+                                progressText.text = "下载完成，正在安装..."
+                                
+                                // 自动调用安装流程
+                                dialog.dismiss()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MainNavigationActivity", "下载异常", e)
+                        runOnUiThread {
+                            progressText.text = "下载失败: ${e.message}"
+                            android.widget.Toast.makeText(context, "下载失败: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                            // 隐藏进度条并恢复按钮
+                            progressContainer.visibility = android.view.View.GONE
+                            positiveButton.visibility = android.view.View.VISIBLE
+                            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).visibility = android.view.View.VISIBLE
+                        }
+                    }
+                }
+            }
+            
+            // 设置长按稍后提醒按钮跳过此版本
+            val negativeButton = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
+            negativeButton.setOnClickListener {
+                // 点击稍后提醒直接关闭对话框
+                dialog.dismiss()
+            }
+            negativeButton.setOnLongClickListener {
+                // 长按稍后提醒按钮跳过此版本
+                val sharedPreferencesManager = uno.skkk.oasis.utils.SharedPreferencesManager(context)
+                sharedPreferencesManager.skipVersion(updateInfo.tagName)
+                android.widget.Toast.makeText(context, "已跳过版本 ${updateInfo.tagName}", android.widget.Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                true
+            }
+        }
+            
+        dialog.show()
     }
     
     private fun setupViewPager() {
