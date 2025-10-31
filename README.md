@@ -42,7 +42,7 @@ cd Oasis-Android
 ### Android 应用
 - **语言**: Kotlin
 - **最低 SDK**: 24 (Android 7.0)
-- **目标 SDK**: 34 (Android 14)
+- **目标 SDK**: 36 (Android 16)
 - **依赖注入**: Hilt
 - **UI**: ViewBinding + Material Design
 
