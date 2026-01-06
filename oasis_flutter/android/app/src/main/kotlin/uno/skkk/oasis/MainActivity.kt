@@ -11,10 +11,12 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "uno.skkk.oasis/apk_installer"
+    private val BUILD_INFO_CHANNEL = "uno.skkk.oasis/build_info"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
+        // APK 安装通道
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "installApk" -> {
@@ -25,6 +27,16 @@ class MainActivity : FlutterActivity() {
                     } else {
                         result.error("INVALID_ARGUMENT", "filePath is required", null)
                     }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // 构建信息通道
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BUILD_INFO_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getBuildTimestamp" -> {
+                    result.success(BuildConfig.BUILD_TIMESTAMP)
                 }
                 else -> result.notImplemented()
             }

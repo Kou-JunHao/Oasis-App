@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -44,23 +45,39 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   Future<void> _loadAppVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
+      
+      // 从原生代码获取构建时间戳
+      String buildTimestamp = '';
+      try {
+        const platform = MethodChannel('uno.skkk.oasis/build_info');
+        buildTimestamp = await platform.invokeMethod('getBuildTimestamp');
+        debugPrint('✓ 成功获取构建时间戳: $buildTimestamp');
+      } catch (e) {
+        debugPrint('✗ 获取构建时间戳失败: $e');
+        debugPrint('使用fallback: packageInfo.buildNumber = ${packageInfo.buildNumber}');
+      }
+      
       if (mounted) {
         setState(() {
           _appVersion = packageInfo.version;
-          _buildNumber = packageInfo.buildNumber;
+          // 优先使用构建时间戳，如果为空则使用占位符
+          _buildNumber = buildTimestamp.isNotEmpty ? buildTimestamp : 'Unknown';
           
-          // 尝试从buildNumber解析日期（格式：YYYYMMDDHHMMSS）
-          if (_buildNumber.isNotEmpty && _buildNumber.length >= 8) {
+          // 从构建时间戳解析完整构建时间（格式：YYYYMMDDHHMMSS）
+          if (_buildNumber != 'Unknown' && _buildNumber.length >= 14) {
             try {
               final year = _buildNumber.substring(0, 4);
               final month = _buildNumber.substring(4, 6);
               final day = _buildNumber.substring(6, 8);
-              _buildDate = '$year-$month-$day';
+              final hour = _buildNumber.substring(8, 10);
+              final minute = _buildNumber.substring(10, 12);
+              final second = _buildNumber.substring(12, 14);
+              _buildDate = '$year-$month-$day $hour:$minute:$second';
             } catch (e) {
-              _buildDate = DateTime.now().toString().substring(0, 10);
+              _buildDate = 'Unknown';
             }
           } else {
-            _buildDate = DateTime.now().toString().substring(0, 10);
+            _buildDate = 'Unknown';
           }
         });
       }
@@ -685,7 +702,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                       const Divider(height: 16),
                       _InfoRow(icon: Icons.tag_rounded, label: '构建号', value: _buildNumber.isNotEmpty ? _buildNumber : 'Unknown'),
                       const Divider(height: 16),
-                      _InfoRow(icon: Icons.calendar_today_rounded, label: '构建日期', value: _buildDate),
+                      _InfoRow(icon: Icons.calendar_today_rounded, label: '构建时间', value: _buildDate),
                       const Divider(height: 16),
                       _InfoRow(icon: Icons.code_rounded, label: '框架', value: 'Flutter'),
                       const Divider(height: 16),

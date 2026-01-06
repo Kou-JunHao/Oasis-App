@@ -16,7 +16,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.0.0+1
+# Flutter --split-per-abi 会为每个架构添加 2000 偏移
+# 版本码 201 → arm64-v8a: 2201, armeabi-v7a: 2202, x86_64: 2203
+# 更新检查基于 versionName (2.0.1) 而非 versionCode，所以不受影响
+version: 2.0.1+201
 
 environment:
   sdk: ^3.9.2
@@ -67,6 +70,9 @@ dependencies:
   
   # URL launcher
   url_launcher: ^6.3.2
+  
+  # Alipay SDK
+  tobias: ^5.3.2
   
   # Markdown support
   flutter_markdown: ^0.7.4+1

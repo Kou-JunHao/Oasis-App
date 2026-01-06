@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:tobias/tobias.dart';
 import '../models/api_models.dart';
 import '../services/api_service.dart';
 
@@ -383,33 +383,66 @@ class WalletProvider with ChangeNotifier {
   /// 调用支付宝支付
   Future<bool> _launchAlipayPayment(String paymentString) async {
     try {
-      // 构造支付宝支付URL
-      final alipayUrl = Uri.parse('alipays://platformapi/startapp?$paymentString');
-      
       if (kDebugMode) {
-        print('准备启动支付宝应用...');
+        print('准备启动支付宝SDK...');
+        print('支付参数: ${paymentString.substring(0, paymentString.length > 100 ? 100 : paymentString.length)}...');
       }
 
-      // 尝试打开支付宝应用
-      if (await canLaunchUrl(alipayUrl)) {
-        final launched = await launchUrl(
-          alipayUrl, 
-          mode: LaunchMode.externalApplication,
-        );
+      // 调用tobias支付宝SDK (新版本API)
+      final tobias = Tobias();
+      final payResult = await tobias.pay(paymentString);
+      
+      if (kDebugMode) {
+        print('支付宝返回结果: $payResult');
+      }
+
+      // 解析支付结果
+      if (payResult != null && payResult.isNotEmpty) {
+        final resultStatus = payResult['resultStatus'] as String?;
+        final memo = payResult['memo'] as String?;
         
-        if (launched) {
+        if (kDebugMode) {
+          print('resultStatus: $resultStatus');
+          print('memo: $memo');
+        }
+
+        // 9000 表示支付成功
+        // 8000 表示正在处理中（可能支付成功）
+        // 6001 表示用户取消
+        // 6002 表示网络错误
+        // 其他表示支付失败
+        if (resultStatus == '9000') {
           if (kDebugMode) {
-            print('支付宝应用已启动');
+            print('支付成功');
           }
-          // 注意：这里无法真实检测支付结果，需要用户确认
-          // 实际项目中应该通过服务器回调或轮询订单状态
           return true;
+        } else if (resultStatus == '8000') {
+          if (kDebugMode) {
+            print('支付结果确认中，建议查询订单状态');
+          }
+          // 对于处理中的订单，可以返回true让用户知道已提交
+          return true;
+        } else if (resultStatus == '6001') {
+          _error = '用户取消支付';
+          if (kDebugMode) {
+            print(_error);
+          }
+          return false;
+        } else if (resultStatus == '6002') {
+          _error = '网络连接出错';
+          if (kDebugMode) {
+            print(_error);
+          }
+          return false;
         } else {
-          _error = '启动支付宝失败';
+          _error = '支付失败: ${memo ?? "未知错误"}';
+          if (kDebugMode) {
+            print(_error);
+          }
           return false;
         }
       } else {
-        _error = '无法启动支付宝应用，请确保已安装支付宝';
+        _error = '支付返回结果为空';
         if (kDebugMode) {
           print(_error);
         }

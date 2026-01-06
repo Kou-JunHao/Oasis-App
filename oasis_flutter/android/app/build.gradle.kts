@@ -1,10 +1,12 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -21,12 +23,20 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "21"
+    }
+
+    kotlin {
+        jvmToolchain(21)
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     // 签名配置
@@ -40,34 +50,22 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "uno.skkk.oasis"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 24  // Android 7.0 (Nougat) - API 24
-        targetSdk = 34  // Android 15 (Vanilla Ice Cream) - API 34
+        minSdk = 24
+        targetSdk = 36  // Android 16
         
-        // 动态版本配置
+        // 版本号由 Flutter 管理（pubspec.yaml）
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         
-        setProperty("archivesBaseName", "oasis_v${flutter.versionName}")
+        // 生成构建时间戳
+        val buildTimestamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.US).format(Date())
+        buildConfigField("String", "BUILD_TIMESTAMP", "\"$buildTimestamp\"")
     }
 
     buildTypes {
         release {
-            // 使用自定义签名配置
             signingConfig = signingConfigs.getByName("release")
-        }
-    }
-    
-    // 自定义APK输出文件名
-    applicationVariants.all {
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val abiFilter = output.filters.find { it.filterType == com.android.build.OutputFile.ABI }
-            val abiName = abiFilter?.identifier ?: "universal"
-            output.outputFileName = "oasis_${versionName}_${abiName}.apk"
         }
     }
 }
