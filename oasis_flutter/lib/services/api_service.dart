@@ -34,16 +34,16 @@ class ApiService {
           options.headers['authorization'] = _token;
           if (AppConfig.isDebugMode) {
             // ignore: avoid_print
-            print('🔐 添加Token到请求: ${_token!.substring(0, 10)}...');
+            print('添加Token到请求: ${_token!.substring(0, 10)}...');
           }
         } else if (AppConfig.isDebugMode) {
           // ignore: avoid_print
-          print('⚠️ 请求时Token为空!');
+          print('请求时Token为空!');
         }
 
         if (AppConfig.isDebugMode) {
           // ignore: avoid_print
-          print('📤 请求: ${options.method} ${options.uri}');
+          print('请求: ${options.method} ${options.uri}');
           // ignore: avoid_print
           print('请求头: ${options.headers}');
           if (options.data != null) {
@@ -79,7 +79,7 @@ class ApiService {
     _token = token;
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
-      print('✅ ApiService Token已设置: ${token.substring(0, 10)}...');
+      print('ApiService Token已设置: ${token.substring(0, 10)}...');
     }
   }
 
@@ -88,7 +88,7 @@ class ApiService {
     _token = null;
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
-      print('🗑️ ApiService Token已清除');
+      print('ApiService Token已清除');
     }
   }
 
@@ -218,12 +218,12 @@ class ApiService {
   Future<ApiResponse<WalletResponseData>> getWalletBalance() async {
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
-      print('💰 开始获取钱包余额, Token状态: ${_token != null ? "已设置(${_token!.substring(0, 10)}...)" : "未设置"}');
+      print('开始获取钱包余额, Token状态: ${_token != null ? "已设置(${_token!.substring(0, 10)}...)" : "未设置"}');
     }
     final response = await _dio.get('api/v1/acc/wallet/owner');
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
-      print('💰 钱包余额响应: ${response.statusCode}, data=${response.data}');
+      print('钱包余额响应: ${response.statusCode}, data=${response.data}');
     }
     return ApiResponse.fromJson(
       response.data,
