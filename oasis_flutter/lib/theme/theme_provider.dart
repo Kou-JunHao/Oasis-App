@@ -21,6 +21,10 @@ class ThemeProvider extends ChangeNotifier {
   ColorScheme? get dynamicLightColorScheme => _dynamicLightColorScheme;
   ColorScheme? get dynamicDarkColorScheme => _dynamicDarkColorScheme;
 
+  bool isDynamicColorSchemeSame(ColorScheme? light, ColorScheme? dark) {
+    return _dynamicLightColorScheme == light && _dynamicDarkColorScheme == dark;
+  }
+
   Future<void> _initPreferences() async {
     _prefs = await SharedPreferences.getInstance();
     _loadThemeMode();
@@ -75,6 +79,9 @@ class ThemeProvider extends ChangeNotifier {
 
   /// 更新动态颜色方案（从系统获取）
   void updateDynamicColorScheme(ColorScheme? light, ColorScheme? dark) {
+    if (isDynamicColorSchemeSame(light, dark)) {
+      return;
+    }
     _dynamicLightColorScheme = light;
     _dynamicDarkColorScheme = dark;
     notifyListeners();
@@ -83,7 +90,7 @@ class ThemeProvider extends ChangeNotifier {
   /// 获取浅色主题
   ThemeData getLightTheme() {
     ColorScheme colorScheme;
-    
+
     if (_useDynamicColor && _dynamicLightColorScheme != null) {
       // 使用系统动态颜色（莫奈取色）
       colorScheme = _dynamicLightColorScheme!;
@@ -107,7 +114,7 @@ class ThemeProvider extends ChangeNotifier {
   /// 获取深色主题
   ThemeData getDarkTheme() {
     ColorScheme colorScheme;
-    
+
     if (_useDynamicColor && _dynamicDarkColorScheme != null) {
       // 使用系统动态颜色（莫奈取色）
       colorScheme = _dynamicDarkColorScheme!;
@@ -134,7 +141,7 @@ class ThemeProvider extends ChangeNotifier {
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
-      
+
       // AppBar主题
       appBarTheme: AppBarTheme(
         centerTitle: false,
@@ -144,20 +151,17 @@ class ThemeProvider extends ChangeNotifier {
         foregroundColor: colorScheme.onSurface,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
       ),
-      
+
       // Card主题
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: 1,
-          ),
+          side: BorderSide(color: colorScheme.outlineVariant, width: 1),
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // FilledButton主题
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -167,7 +171,7 @@ class ThemeProvider extends ChangeNotifier {
           ),
         ),
       ),
-      
+
       // OutlinedButton主题
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
@@ -177,7 +181,7 @@ class ThemeProvider extends ChangeNotifier {
           ),
         ),
       ),
-      
+
       // TextButton主题
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
@@ -187,14 +191,12 @@ class ThemeProvider extends ChangeNotifier {
           ),
         ),
       ),
-      
+
       // FloatingActionButton主题
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      
+
       // NavigationBar主题
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
@@ -207,7 +209,7 @@ class ThemeProvider extends ChangeNotifier {
           return IconThemeData(color: colorScheme.onSurfaceVariant);
         }),
       ),
-      
+
       // InputDecoration主题
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -222,38 +224,28 @@ class ThemeProvider extends ChangeNotifier {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: colorScheme.error, width: 1),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
       ),
-      
+
       // Dialog主题
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
-      
+
       // BottomSheet主题
       bottomSheetTheme: BottomSheetThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
-      
+
       // Divider主题
       dividerTheme: DividerThemeData(
         color: colorScheme.outlineVariant,

@@ -13,7 +13,7 @@ import 'widgets/disclaimer_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 创建API服务单例
   final apiService = ApiService();
 
@@ -34,10 +34,7 @@ void main() async {
 class OasisApp extends StatefulWidget {
   final ApiService apiService;
 
-  const OasisApp({
-    super.key,
-    required this.apiService,
-  });
+  const OasisApp({super.key, required this.apiService});
 
   @override
   State<OasisApp> createState() => _OasisAppState();
@@ -72,7 +69,7 @@ class _OasisAppState extends State<OasisApp> {
       setState(() {
         _disclaimerAccepted = accepted;
       });
-      
+
       // 如果未接受,显示对话框
       if (!accepted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,7 +81,7 @@ class _OasisAppState extends State<OasisApp> {
 
   void _showDisclaimerDialog() {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -110,9 +107,7 @@ class _OasisAppState extends State<OasisApp> {
     if (_disclaimerAccepted == null) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
@@ -122,23 +117,28 @@ class _OasisAppState extends State<OasisApp> {
         if (!authProvider.isInitialized) {
           return const MaterialApp(
             debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
+            home: Scaffold(body: Center(child: CircularProgressIndicator())),
           );
         }
-        
+
         // 同步token到ApiService（仅在Token变化时）
         _syncTokenIfNeeded(authProvider.token);
 
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             // 更新动态颜色方案
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (themeProvider.useDynamicColor) {
-                themeProvider.updateDynamicColorScheme(lightDynamic, darkDynamic);
-              }
-            });
+            if (themeProvider.useDynamicColor &&
+                !themeProvider.isDynamicColorSchemeSame(
+                  lightDynamic,
+                  darkDynamic,
+                )) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                themeProvider.updateDynamicColorScheme(
+                  lightDynamic,
+                  darkDynamic,
+                );
+              });
+            }
 
             return MaterialApp(
               title: 'Oasis',
@@ -146,8 +146,8 @@ class _OasisAppState extends State<OasisApp> {
               theme: themeProvider.getLightTheme(),
               darkTheme: themeProvider.getDarkTheme(),
               themeMode: themeProvider.themeMode,
-              home: authProvider.isLoggedIn 
-                  ? const HomeScreen()  // 已登录直接进入主页
+              home: authProvider.isLoggedIn
+                  ? const HomeScreen() // 已登录直接进入主页
                   : const LoginScreen(), // 未登录显示登录界面
             );
           },

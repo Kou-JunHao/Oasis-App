@@ -30,6 +30,9 @@ Desktop.ini
 *.apk
 *.aab
 *.dex
+*.jks
+*.keystore
+**/key.properties
 build/
 .gradle/
 local.properties
@@ -50,3 +53,4 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+

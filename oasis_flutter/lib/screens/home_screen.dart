@@ -22,13 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
     SettingsScreen(),
   ];
 
-  static const List<String> _titles = [
-    '设备',
-    '钱包',
-    '订单',
-    '设置',
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

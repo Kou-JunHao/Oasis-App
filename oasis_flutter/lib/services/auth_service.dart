@@ -33,10 +33,10 @@ class AuthService {
             'Connection': 'keep-alive',
             'applicationtype': '1,1',
             'Accept': '*/*',
-            'User-Agent': 'Android_ilife798_2.0.11',
+            'User-Agent': 'Android_ilife798_3.1.4',
             'Accept-Language': 'zh-TW,zh-Hant;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
-            'versioncode': '2.0.11',
+            'versioncode': '3.1.4',
           },
         ),
       );
@@ -91,10 +91,10 @@ class AuthService {
             'Connection': 'keep-alive',
             'applicationtype': '1,1',
             'Accept': '*/*',
-            'User-Agent': 'Android_ilife798_2.0.11',
+            'User-Agent': 'Android_ilife798_3.1.4',
             'Accept-Language': 'zh-TW,zh-Hant;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
-            'versioncode': '2.0.11',
+            'versioncode': '3.1.4',
           },
         ),
       );
@@ -104,7 +104,7 @@ class AuthService {
           response.data,
           (json) => LoginData.fromJson(json as Map<String, dynamic>),
         );
-        
+
         if (apiResponse.isSuccess && apiResponse.data != null) {
           final loginData = apiResponse.data!;
           // 将LoginData转换为LoginResponse
@@ -113,12 +113,12 @@ class AuthService {
           return LoginResponse(
             token: loginData.al.token,
             user: User(
-              id: loginData.al.uid,  // 使用uid而不是oid
-              username: phoneNumber,  // 使用手机号作为初始用户名，后续从Master API更新
+              id: loginData.al.uid, // 使用uid而不是oid
+              username: phoneNumber, // 使用手机号作为初始用户名，后续从Master API更新
               phone: phoneNumber,
               createdAt: DateTime.now(),
               token: loginData.al.token,
-              userId: loginData.al.uid,  // 使用uid
+              userId: loginData.al.uid, // 使用uid
               phoneNumber: phoneNumber,
               eid: loginData.al.eid,
             ),

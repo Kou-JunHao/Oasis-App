@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../providers/order_provider.dart';
 import '../models/api_models.dart';
 
@@ -25,7 +24,7 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
@@ -44,7 +43,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   ),
                 ],
               ),
-              
+
               // 筛选提示
               SliverToBoxAdapter(
                 child: Padding(
@@ -55,7 +54,8 @@ class _OrderScreenState extends State<OrderScreen> {
                       padding: const EdgeInsets.all(12),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline_rounded, 
+                          Icon(
+                            Icons.info_outline_rounded,
                             color: colorScheme.onSecondaryContainer,
                             size: 20,
                           ),
@@ -87,7 +87,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
   Widget _buildOrderList(BuildContext context, OrderProvider provider) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     if (provider.isLoading) {
       return const SliverFillRemaining(
         child: Center(child: CircularProgressIndicator()),
@@ -102,7 +102,11 @@ class _OrderScreenState extends State<OrderScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline_rounded, size: 64, color: colorScheme.error),
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 64,
+                  color: colorScheme.error,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   provider.error!,
@@ -130,7 +134,11 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.receipt_long_rounded, size: 64, color: colorScheme.outlineVariant),
+              Icon(
+                Icons.receipt_long_rounded,
+                size: 64,
+                color: colorScheme.outlineVariant,
+              ),
               const SizedBox(height: 16),
               Text(
                 '暂无订单',
@@ -147,16 +155,13 @@ class _OrderScreenState extends State<OrderScreen> {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final order = provider.orders[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _OrderCard(order: order),
-            );
-          },
-          childCount: provider.orders.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final order = provider.orders[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _OrderCard(order: order),
+          );
+        }, childCount: provider.orders.length),
       ),
     );
   }
@@ -254,7 +259,7 @@ class _FilterOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = value == currentValue;
-    
+
     return ListTile(
       title: Text(label),
       trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
@@ -275,10 +280,7 @@ class _OrderCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: 1,
-          ),
+          bottom: BorderSide(color: colorScheme.outlineVariant, width: 1),
         ),
       ),
       child: InkWell(
@@ -311,20 +313,22 @@ class _OrderCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            order.message.isNotEmpty ? order.message : '订单 #${order.id}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            order.message.isNotEmpty
+                                ? order.message
+                                : '订单 #${order.id}',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           '¥${order.payment.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ],
                     ),
@@ -332,9 +336,14 @@ class _OrderCard extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(order.status).withOpacity(0.1),
+                            color: _getStatusColor(
+                              order.status,
+                            ).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -350,9 +359,8 @@ class _OrderCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             order.createTime,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ],
@@ -428,11 +436,8 @@ class _OrderCard extends StatelessWidget {
 
   void _showOrderDetails(BuildContext context) {
     // TODO: 实现订单详情页面
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('订单详情功能待实现')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('订单详情功能待实现')));
   }
 }
-
-
-

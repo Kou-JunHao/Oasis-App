@@ -8,13 +8,13 @@ class WalletProvider with ChangeNotifier {
   final ApiService _apiService;
 
   WalletData? _walletData;
-  WalletResponseData? _walletResponseData;  // 保存完整的响应数据
+  WalletResponseData? _walletResponseData; // 保存完整的响应数据
   WalletEndpointInfo? _endpointInfo;
   List<Product> _products = [];
   List<OrderData> _orders = [];
   bool _isLoading = false;
   String? _error;
-  int _currentWalletIndex = 0;  // 当前选中的钱包索引
+  int _currentWalletIndex = 0; // 当前选中的钱包索引
 
   WalletProvider(this._apiService);
 
@@ -50,14 +50,14 @@ class WalletProvider with ChangeNotifier {
 
   // 单个钱包的余额
   double get balance => _walletData?.displayBalance ?? 0.0;
-  
+
   // 所有钱包的总余额（所有余额字段相加）
   double get totalBalance {
     if (_walletResponseData == null) return 0.0;
     final allWallets = _walletResponseData!.allWallets;
     return allWallets.fold(0.0, (sum, wallet) => sum + wallet.totalBalance);
   }
-  
+
   String? get eid => _endpointInfo?.id;
 
   /// 获取钱包余额
@@ -74,10 +74,10 @@ class WalletProvider with ChangeNotifier {
       }
 
       if (response.isSuccess && response.data != null) {
-        _walletResponseData = response.data;  // 保存完整响应
-        _walletData = response.data!.primaryWallet;  // 使用primaryWallet
+        _walletResponseData = response.data; // 保存完整响应
+        _walletData = response.data!.primaryWallet; // 使用primaryWallet
         _endpointInfo = response.data!.endpoint;
-        
+
         if (kDebugMode) {
           print('===== 钱包数据详情 =====');
           print('主钱包(aw): ${response.data!.wallet != null ? "存在" : "不存在"}');
@@ -97,10 +97,10 @@ class WalletProvider with ChangeNotifier {
           print('endpoint id: ${_endpointInfo?.id}');
           print('=======================');
         }
-        
+
         // 自动选择余额最多的钱包（排序后的第一个）
         _currentWalletIndex = 0;
-        
+
         _error = null;
       } else {
         _error = response.message ?? '获取钱包余额失败';
@@ -162,11 +162,11 @@ class WalletProvider with ChangeNotifier {
 
       final request = BillSaveRequest(
         cata: 1, // 充值类别
-        contact: BillContact(id: ownerId),  // 只需要id
+        contact: BillContact(id: ownerId), // 只需要id
         ep: BillEndpointRef(id: eid),
         note: note,
         owner: BillOwnerRef(id: ownerId),
-        prds: [BillProduct(id: productId, count: 1)],  // 使用prds数组和count
+        prds: [BillProduct(id: productId, count: 1)], // 使用prds数组和count
       );
 
       final response = await _apiService.createRechargeOrder(request);
@@ -200,10 +200,7 @@ class WalletProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final response = await _apiService.getOrderList(
-        page: page,
-        size: size,
-      );
+      final response = await _apiService.getOrderList(page: page, size: size);
 
       _orders = response.orders;
       _error = null;
@@ -301,10 +298,10 @@ class WalletProvider with ChangeNotifier {
       // 第一步：创建充值订单
       final request = BillSaveRequest(
         cata: 1, // 充值类别
-        contact: BillContact(id: ownerId),  // 使用用户ID作为联系人
-        ep: BillEndpointRef(id: endpointId),  // 使用端点ID
+        contact: BillContact(id: ownerId), // 使用用户ID作为联系人
+        ep: BillEndpointRef(id: endpointId), // 使用端点ID
         note: '钱包充值',
-        owner: BillOwnerRef(id: ownerId),  // 使用用户ID作为订单拥有者
+        owner: BillOwnerRef(id: ownerId), // 使用用户ID作为订单拥有者
         prds: [BillProduct(id: productId, count: count)],
       );
 
@@ -362,7 +359,7 @@ class WalletProvider with ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      
+
       if (kDebugMode) {
         print('===== 充值流程结束 =====');
       }
@@ -385,22 +382,24 @@ class WalletProvider with ChangeNotifier {
     try {
       if (kDebugMode) {
         print('准备启动支付宝SDK...');
-        print('支付参数: ${paymentString.substring(0, paymentString.length > 100 ? 100 : paymentString.length)}...');
+        print(
+          '支付参数: ${paymentString.substring(0, paymentString.length > 100 ? 100 : paymentString.length)}...',
+        );
       }
 
       // 调用tobias支付宝SDK (新版本API)
       final tobias = Tobias();
       final payResult = await tobias.pay(paymentString);
-      
+
       if (kDebugMode) {
         print('支付宝返回结果: $payResult');
       }
 
       // 解析支付结果
-      if (payResult != null && payResult.isNotEmpty) {
+      if (payResult.isNotEmpty) {
         final resultStatus = payResult['resultStatus'] as String?;
         final memo = payResult['memo'] as String?;
-        
+
         if (kDebugMode) {
           print('resultStatus: $resultStatus');
           print('memo: $memo');
