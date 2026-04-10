@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/api_models.dart';
+import '../models/device_group.dart';
 import '../services/api_service.dart';
 
 /// 设备状态管理
@@ -23,9 +24,21 @@ class DeviceProvider with ChangeNotifier {
   bool _isFetchingDevices = false;
   static const Duration _defaultPollingInterval = Duration(seconds: 15);
 
+  // 设备分组管理
+  List<DeviceGroup> _deviceGroups = [];
+  Map<String, String> _deviceGroupMap = {}; // deviceId -> groupId
+  int _groupsVersion = 0;
+  String _activeGroupId = 'all'; // 显示的分组（'all'表示所有设备）
+
+  // 分组过滤缓存
+  List<DeviceDetail> _filteredDevicesCache = [];
+  String _cachedFilterGroupId = '';
+  int _cachedDevicesVersion = -1;
+
   DeviceProvider(this._apiService) {
     _loadPinnedDevices();
     _loadDeviceNotes();
+    _loadDeviceGroups();
   }
 
   void _markDeviceOrderDirty() {
@@ -67,6 +80,34 @@ class DeviceProvider with ChangeNotifier {
   int get devicesVersion => _devicesVersion;
   int get notesVersion => _notesVersion;
   bool get isPollingEnabled => _isPollingEnabled;
+  List<DeviceGroup> get deviceGroups => _deviceGroups;
+  int get groupsVersion => _groupsVersion;
+  String get activeGroupId => _activeGroupId;
+
+  /// 获取当前分组的设备列表（带缓存）
+  List<DeviceDetail> get filteredDevices {
+    // 检查缓存是否有效
+    if (_cachedFilterGroupId == _activeGroupId &&
+        _cachedDevicesVersion == _devicesVersion &&
+        _filteredDevicesCache.isNotEmpty) {
+      return _filteredDevicesCache;
+    }
+
+    // 计算过滤后的设备列表
+    List<DeviceDetail> result;
+    if (_activeGroupId == 'all') {
+      result = devices;
+    } else {
+      result = devices.where((device) => _deviceGroupMap[device.id] == _activeGroupId).toList();
+    }
+
+    // 更新缓存
+    _filteredDevicesCache = result;
+    _cachedFilterGroupId = _activeGroupId;
+    _cachedDevicesVersion = _devicesVersion;
+
+    return result;
+  }
 
   /// 开启设备状态轮询（前台使用）
   void startDevicePolling({Duration interval = _defaultPollingInterval}) {
@@ -173,6 +214,138 @@ class DeviceProvider with ChangeNotifier {
         print('保存设备备注失败: $e');
       }
     }
+  }
+
+  /// 加载设备分组
+  Future<void> _loadDeviceGroups() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawGroups = prefs.getString('device_groups');
+      final rawGroupMap = prefs.getString('device_group_map');
+
+      if (rawGroups != null && rawGroups.isNotEmpty) {
+        final decodedGroups = jsonDecode(rawGroups) as List<dynamic>;
+        _deviceGroups = decodedGroups
+            .map((e) => DeviceGroup.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else {
+        // 初始化默认分组
+        _deviceGroups = [
+          DeviceGroup(
+            id: 'default',
+            name: '未分组',
+            isDefault: true,
+          ),
+        ];
+      }
+
+      if (rawGroupMap != null && rawGroupMap.isNotEmpty) {
+        final decodedMap = jsonDecode(rawGroupMap) as Map<String, dynamic>;
+        _deviceGroupMap = decodedMap
+            .map((key, value) => MapEntry(key, value?.toString() ?? ''));
+      }
+
+      _groupsVersion++;
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('加载设备分组失败: $e');
+      }
+    }
+  }
+
+  /// 保存设备分组
+  Future<void> _saveDeviceGroups() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('device_groups', jsonEncode(_deviceGroups));
+      await prefs.setString('device_group_map', jsonEncode(_deviceGroupMap));
+    } catch (e) {
+      if (kDebugMode) {
+        print('保存设备分组失败: $e');
+      }
+    }
+  }
+
+  /// 创建新分组
+  Future<void> createGroup(String name) async {
+    final newGroup = DeviceGroup(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      sortOrder: _deviceGroups.length,
+    );
+
+    _deviceGroups.add(newGroup);
+    _groupsVersion++;
+    await _saveDeviceGroups();
+    notifyListeners();
+  }
+
+  /// 重命名分组
+  Future<void> renameGroup(String groupId, String newName) async {
+    final groupIndex = _deviceGroups.indexWhere((g) => g.id == groupId);
+    if (groupIndex != -1) {
+      _deviceGroups[groupIndex] = _deviceGroups[groupIndex].copyWith(name: newName);
+      _groupsVersion++;
+      await _saveDeviceGroups();
+      notifyListeners();
+    }
+  }
+
+  /// 删除分组（设备会移动到默认分组）
+  Future<void> deleteGroup(String groupId) async {
+    // 不能删除默认分组
+    if (groupId == 'default') return;
+
+    // 将该分组的设备移动到默认分组
+    final defaultGroup = _deviceGroups.firstWhere((g) => g.id == 'default');
+    _deviceGroupMap.forEach((deviceId, currentGroupId) {
+      if (currentGroupId == groupId) {
+        _deviceGroupMap[deviceId] = 'default';
+      }
+    });
+
+    // 删除分组
+    _deviceGroups.removeWhere((g) => g.id == groupId);
+    _groupsVersion++;
+    await _saveDeviceGroups();
+    notifyListeners();
+  }
+
+  /// 将设备添加到分组
+  Future<void> addDeviceToGroup(String deviceId, String groupId) async {
+    _deviceGroupMap[deviceId] = groupId;
+    _groupsVersion++;
+    await _saveDeviceGroups();
+    notifyListeners();
+  }
+
+  /// 将设备从分组中移除（移动到默认分组）
+  Future<void> removeDeviceFromGroup(String deviceId) async {
+    _deviceGroupMap[deviceId] = 'default';
+    _groupsVersion++;
+    await _saveDeviceGroups();
+    notifyListeners();
+  }
+
+  /// 切换当前显示的分组
+  void setActiveGroup(String groupId) {
+    if (_activeGroupId != groupId) {
+      _activeGroupId = groupId;
+      _groupsVersion++;
+      notifyListeners();
+    }
+  }
+
+  /// 获取设备所在的分组
+  String getDeviceGroupId(String deviceId) {
+    return _deviceGroupMap[deviceId] ?? 'default';
+  }
+
+  /// 获取分组名称
+  String getGroupName(String groupId) {
+    final group = _deviceGroups.firstWhere((g) => g.id == groupId, orElse: () => DeviceGroup(id: groupId, name: '未知分组'));
+    return group.name;
   }
 
   /// 置顶/取消置顶设备

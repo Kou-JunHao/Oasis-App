@@ -5,6 +5,7 @@ import '../providers/device_provider.dart';
 import '../models/api_models.dart';
 import '../widgets/bottom_sheet_helper.dart';
 import '../widgets/qr_scanner_screen.dart';
+import '../widgets/device_group_dialog.dart';
 
 /// 设备列表页面 - 参考Kotlin的DeviceListFragment
 class DeviceScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
   List<DeviceDetail> _filteredDevices = [];
   int _lastDevicesVersion = -1;
   int _lastNotesVersion = -1;
+  int _lastGroupsVersion = -1;
   bool _refreshQueued = false;
 
   @override
@@ -71,6 +73,36 @@ class _DeviceScreenState extends State<DeviceScreen> {
     }
   }
 
+  /// 构建设备卡片的分组标签
+  Widget _buildGroupTag(BuildContext context, DeviceDetail device, DeviceProvider deviceProvider) {
+    final groupId = deviceProvider.getDeviceGroupId(device.id);
+    final groupName = deviceProvider.getGroupName(groupId);
+
+    if (groupId == 'default') {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        groupName,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+
+  /// 显示设备操作菜单（简化版）
+  void _showSimpleDeviceActionMenu(BuildContext context, DeviceDetail device) {
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    _showDeviceActionMenu(context, device, deviceProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -78,27 +110,25 @@ class _DeviceScreenState extends State<DeviceScreen> {
     return Scaffold(
       body: Consumer<DeviceProvider>(
         builder: (context, deviceProvider, child) {
-          final currentDevices = deviceProvider.devices;
-          final shouldRefresh =
-              _lastDevicesVersion != deviceProvider.devicesVersion ||
-              _lastNotesVersion != deviceProvider.notesVersion;
+          final currentDevices = deviceProvider.filteredDevices;
 
-          // 仅在设备快照或备注版本变化时刷新，避免build中持续排队setState
-          if (shouldRefresh && !_refreshQueued) {
-            _refreshQueued = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _refreshQueued = false;
-              if (mounted) {
-                _allDevices = currentDevices;
-                _lastDevicesVersion = deviceProvider.devicesVersion;
-                _lastNotesVersion = deviceProvider.notesVersion;
-                _filterDevices(
-                  _searchController.text,
-                  _allDevices,
-                  deviceProvider,
-                );
-              }
-            });
+          // 同步更新设备列表，避免延迟
+          if (_lastDevicesVersion != deviceProvider.devicesVersion ||
+              _lastGroupsVersion != deviceProvider.groupsVersion) {
+            _allDevices = currentDevices;
+            _lastDevicesVersion = deviceProvider.devicesVersion;
+            _lastNotesVersion = deviceProvider.notesVersion;
+            _lastGroupsVersion = deviceProvider.groupsVersion;
+            // 只在必要时进行过滤
+            if (_searchController.text.isNotEmpty) {
+              _filterDevices(
+                _searchController.text,
+                _allDevices,
+                deviceProvider,
+              );
+            } else {
+              _filteredDevices = _allDevices;
+            }
           }
 
           if (deviceProvider.isLoading && currentDevices.isEmpty) {
@@ -148,12 +178,21 @@ class _DeviceScreenState extends State<DeviceScreen> {
                 floating: false,
                 pinned: true,
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.add_rounded),
-                    onPressed: () => _showDeviceManagementMenu(context),
-                    tooltip: '添加设备',
-                  ),
-                ],
+                    const GroupSelectorDropdown(),
+                    IconButton(
+                      icon: const Icon(Icons.group_rounded),
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => const DeviceGroupDialog(),
+                      ),
+                      tooltip: '分组管理',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_rounded),
+                      onPressed: () => _showDeviceManagementMenu(context),
+                      tooltip: '添加设备',
+                    ),
+                  ],
               ),
 
               // 搜索栏
@@ -306,6 +345,12 @@ class _DeviceScreenState extends State<DeviceScreen> {
           value: 'pin',
         ),
         MenuOption(
+          title: '移动到分组',
+          subtitle: '将设备归类到指定分组',
+          icon: Icons.group_rounded,
+          value: 'group',
+        ),
+        MenuOption(
           title: '删除设备',
           subtitle: '从收藏列表移除',
           icon: Icons.delete_outline_rounded,
@@ -325,6 +370,12 @@ class _DeviceScreenState extends State<DeviceScreen> {
           break;
         case 'pin':
           await _pinDevice(context, device, deviceProvider);
+          break;
+        case 'group':
+          showDialog(
+            context: context,
+            builder: (context) => DeviceGroupDialog(deviceId: device.id),
+          );
           break;
         case 'delete':
           await _deleteDeviceFromCard(context, device, deviceProvider);
@@ -720,7 +771,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
           // TODO: 跳转到设备详情页
         },
         onLongPress: () =>
-            _showDeviceActionMenu(context, device, deviceProvider),
+            _showSimpleDeviceActionMenu(context, device),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -845,6 +896,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   _DeviceStatusChip(device: device),
                 ],
               ),
+              // 分组标签
+              _buildGroupTag(context, device, deviceProvider),
 
               // 设备地址(如果有)
               if (device.address?.detail != null) ...[
