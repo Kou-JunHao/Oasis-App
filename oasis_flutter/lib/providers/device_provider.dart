@@ -84,6 +84,27 @@ class DeviceProvider with ChangeNotifier {
   int get groupsVersion => _groupsVersion;
   String get activeGroupId => _activeGroupId;
 
+  bool _hasGroup(String groupId) {
+    return _deviceGroups.any((g) => g.id == groupId);
+  }
+
+  void _ensureDefaultGroup() {
+    if (_hasGroup('default')) {
+      return;
+    }
+    _deviceGroups.insert(
+      0,
+      DeviceGroup(id: 'default', name: '未分组', isDefault: true),
+    );
+  }
+
+  String _normalizeGroupId(String? groupId) {
+    if (groupId == null || groupId.isEmpty) {
+      return 'default';
+    }
+    return _hasGroup(groupId) ? groupId : 'default';
+  }
+
   /// 获取当前分组的设备列表（带缓存）
   List<DeviceDetail> get filteredDevices {
     // 检查缓存是否有效
@@ -98,7 +119,9 @@ class DeviceProvider with ChangeNotifier {
     if (_activeGroupId == 'all') {
       result = devices;
     } else {
-      result = devices.where((device) => _deviceGroupMap[device.id] == _activeGroupId).toList();
+      result = devices
+          .where((device) => getDeviceGroupId(device.id) == _activeGroupId)
+          .toList();
     }
 
     // 更新缓存
@@ -231,18 +254,28 @@ class DeviceProvider with ChangeNotifier {
       } else {
         // 初始化默认分组
         _deviceGroups = [
-          DeviceGroup(
-            id: 'default',
-            name: '未分组',
-            isDefault: true,
-          ),
+          DeviceGroup(id: 'default', name: '未分组', isDefault: true),
         ];
       }
 
+      // 脏数据修复：确保默认分组始终存在
+      _ensureDefaultGroup();
+
       if (rawGroupMap != null && rawGroupMap.isNotEmpty) {
         final decodedMap = jsonDecode(rawGroupMap) as Map<String, dynamic>;
-        _deviceGroupMap = decodedMap
-            .map((key, value) => MapEntry(key, value?.toString() ?? ''));
+        _deviceGroupMap = decodedMap.map(
+          (key, value) => MapEntry(key, value?.toString() ?? ''),
+        );
+      }
+
+      // 脏数据修复：将无效分组映射回退到 default
+      _deviceGroupMap = _deviceGroupMap.map(
+        (key, value) => MapEntry(key, _normalizeGroupId(value)),
+      );
+
+      // 当前筛选分组无效时，回退到 all
+      if (_activeGroupId != 'all' && !_hasGroup(_activeGroupId)) {
+        _activeGroupId = 'all';
       }
 
       _groupsVersion++;
@@ -285,7 +318,9 @@ class DeviceProvider with ChangeNotifier {
   Future<void> renameGroup(String groupId, String newName) async {
     final groupIndex = _deviceGroups.indexWhere((g) => g.id == groupId);
     if (groupIndex != -1) {
-      _deviceGroups[groupIndex] = _deviceGroups[groupIndex].copyWith(name: newName);
+      _deviceGroups[groupIndex] = _deviceGroups[groupIndex].copyWith(
+        name: newName,
+      );
       _groupsVersion++;
       await _saveDeviceGroups();
       notifyListeners();
@@ -297,8 +332,9 @@ class DeviceProvider with ChangeNotifier {
     // 不能删除默认分组
     if (groupId == 'default') return;
 
+    _ensureDefaultGroup();
+
     // 将该分组的设备移动到默认分组
-    final defaultGroup = _deviceGroups.firstWhere((g) => g.id == 'default');
     _deviceGroupMap.forEach((deviceId, currentGroupId) {
       if (currentGroupId == groupId) {
         _deviceGroupMap[deviceId] = 'default';
@@ -307,6 +343,12 @@ class DeviceProvider with ChangeNotifier {
 
     // 删除分组
     _deviceGroups.removeWhere((g) => g.id == groupId);
+
+    // 如果删除的是当前筛选分组，回退到 all
+    if (_activeGroupId == groupId) {
+      _activeGroupId = 'all';
+    }
+
     _groupsVersion++;
     await _saveDeviceGroups();
     notifyListeners();
@@ -314,7 +356,7 @@ class DeviceProvider with ChangeNotifier {
 
   /// 将设备添加到分组
   Future<void> addDeviceToGroup(String deviceId, String groupId) async {
-    _deviceGroupMap[deviceId] = groupId;
+    _deviceGroupMap[deviceId] = _normalizeGroupId(groupId);
     _groupsVersion++;
     await _saveDeviceGroups();
     notifyListeners();
@@ -330,8 +372,11 @@ class DeviceProvider with ChangeNotifier {
 
   /// 切换当前显示的分组
   void setActiveGroup(String groupId) {
-    if (_activeGroupId != groupId) {
-      _activeGroupId = groupId;
+    final targetGroupId = (groupId == 'all' || _hasGroup(groupId))
+        ? groupId
+        : 'all';
+    if (_activeGroupId != targetGroupId) {
+      _activeGroupId = targetGroupId;
       _groupsVersion++;
       notifyListeners();
     }
@@ -339,12 +384,15 @@ class DeviceProvider with ChangeNotifier {
 
   /// 获取设备所在的分组
   String getDeviceGroupId(String deviceId) {
-    return _deviceGroupMap[deviceId] ?? 'default';
+    return _normalizeGroupId(_deviceGroupMap[deviceId]);
   }
 
   /// 获取分组名称
   String getGroupName(String groupId) {
-    final group = _deviceGroups.firstWhere((g) => g.id == groupId, orElse: () => DeviceGroup(id: groupId, name: '未知分组'));
+    final group = _deviceGroups.firstWhere(
+      (g) => g.id == groupId,
+      orElse: () => DeviceGroup(id: groupId, name: '未知分组'),
+    );
     return group.name;
   }
 

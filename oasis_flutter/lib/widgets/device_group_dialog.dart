@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/device_provider.dart';
 import '../models/device_group.dart';
+import 'bottom_sheet_helper.dart';
 
 /// 设备分组管理对话框
 class DeviceGroupDialog extends StatefulWidget {
@@ -14,7 +15,6 @@ class DeviceGroupDialog extends StatefulWidget {
 }
 
 class _DeviceGroupDialogState extends State<DeviceGroupDialog> {
-  final TextEditingController _groupNameController = TextEditingController();
   String? _selectedGroupId;
 
   @override
@@ -23,118 +23,100 @@ class _DeviceGroupDialogState extends State<DeviceGroupDialog> {
     if (widget.deviceId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-        _selectedGroupId = deviceProvider.getDeviceGroupId(widget.deviceId!);
+        final deviceProvider = Provider.of<DeviceProvider>(
+          context,
+          listen: false,
+        );
+        setState(() {
+          _selectedGroupId = deviceProvider.getDeviceGroupId(widget.deviceId!);
+        });
       });
     }
   }
 
-  @override
-  void dispose() {
-    _groupNameController.dispose();
-    super.dispose();
-  }
-
   /// 显示创建分组对话框
-  void _showCreateGroupDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showCreateGroupDialog(BuildContext context) async {
+    final result = await showInputBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('创建新分组'),
-        content: TextField(
-          controller: _groupNameController,
-          decoration: const InputDecoration(
-            hintText: '输入分组名称',
-          ),
-          autofocus: true,
+      title: '创建新分组',
+      icon: Icons.create_new_folder_rounded,
+      confirmText: '创建',
+      fields: [
+        InputField(
+          key: 'groupName',
+          label: '分组名称',
+          hint: '输入分组名称',
+          icon: Icons.group_rounded,
+          validator: (value) {
+            if ((value ?? '').trim().isEmpty) {
+              return '分组名称不能为空';
+            }
+            return null;
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-                final name = _groupNameController.text.trim();
-                if (name.isNotEmpty && context.mounted) {
-                  final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-                  await deviceProvider.createGroup(name);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                }
-              },
-            child: const Text('创建'),
-          ),
-        ],
-      ),
+      ],
     );
+
+    if (result == null || !context.mounted) return;
+    final name = (result['groupName'] ?? '').trim();
+    if (name.isEmpty) return;
+
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    await deviceProvider.createGroup(name);
   }
 
   /// 显示重命名分组对话框
-  void _showRenameGroupDialog(BuildContext context, DeviceGroup group) {
-    _groupNameController.text = group.name;
-    showDialog(
+  Future<void> _showRenameGroupDialog(
+    BuildContext context,
+    DeviceGroup group,
+  ) async {
+    final result = await showInputBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('重命名分组'),
-        content: TextField(
-          controller: _groupNameController,
-          decoration: const InputDecoration(
-            hintText: '输入新分组名称',
-          ),
-          autofocus: true,
+      title: '重命名分组',
+      icon: Icons.drive_file_rename_outline_rounded,
+      confirmText: '保存',
+      fields: [
+        InputField(
+          key: 'groupName',
+          label: '新分组名称',
+          hint: '输入新分组名称',
+          icon: Icons.group_rounded,
+          initialValue: group.name,
+          validator: (value) {
+            if ((value ?? '').trim().isEmpty) {
+              return '分组名称不能为空';
+            }
+            return null;
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-                final newName = _groupNameController.text.trim();
-                if (newName.isNotEmpty && newName != group.name && context.mounted) {
-                  final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-                  await deviceProvider.renameGroup(group.id, newName);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                }
-              },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
+      ],
     );
+
+    if (result == null || !context.mounted) return;
+    final newName = (result['groupName'] ?? '').trim();
+    if (newName.isEmpty || newName == group.name) return;
+
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    await deviceProvider.renameGroup(group.id, newName);
   }
 
   /// 显示删除分组确认对话框
-  void _showDeleteGroupDialog(BuildContext context, DeviceGroup group) {
-    showDialog(
+  Future<void> _showDeleteGroupDialog(
+    BuildContext context,
+    DeviceGroup group,
+  ) async {
+    final confirmed = await showConfirmBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除分组'),
-        content: Text('确定要删除分组 "${group.name}" 吗？该分组下的设备将移动到 "未分组"。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-                if (context.mounted) {
-                  final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-                  await deviceProvider.deleteGroup(group.id);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                }
-              },
-            child: const Text('删除'),
-          ),
-        ],
-      ),
+      title: '删除分组',
+      message: '确定要删除分组 "${group.name}" 吗？该分组下的设备将移动到“未分组”。',
+      icon: Icons.delete_outline_rounded,
+      confirmText: '删除',
+      isDangerous: true,
     );
+
+    if (confirmed != true || !context.mounted) return;
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    await deviceProvider.deleteGroup(group.id);
   }
 
   @override
@@ -205,19 +187,22 @@ class _DeviceGroupDialogState extends State<DeviceGroupDialog> {
           actions: [
             if (widget.deviceId == null)
               TextButton(
-                onPressed: () => _showCreateGroupDialog(context),
+                onPressed: () async => _showCreateGroupDialog(context),
                 child: const Text('创建分组'),
               ),
             if (widget.deviceId != null)
               TextButton(
                 onPressed: () async {
-                if (_selectedGroupId != null && context.mounted) {
-                  await deviceProvider.addDeviceToGroup(widget.deviceId!, _selectedGroupId!);
-                  if (context.mounted) {
-                    Navigator.pop(context);
+                  if (_selectedGroupId != null && context.mounted) {
+                    await deviceProvider.addDeviceToGroup(
+                      widget.deviceId!,
+                      _selectedGroupId!,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
                   }
-                }
-              },
+                },
                 child: const Text('确定'),
               ),
             TextButton(
@@ -239,25 +224,41 @@ class GroupSelectorDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<DeviceProvider>(
       builder: (context, deviceProvider, child) {
-        return DropdownButton<String>(
-          value: deviceProvider.activeGroupId,
-          items: [
-            const DropdownMenuItem(
-              value: 'all',
-              child: Text('所有设备'),
+        final validValues = {
+          'all',
+          ...deviceProvider.deviceGroups.map((group) => group.id),
+        };
+        final safeValue = validValues.contains(deviceProvider.activeGroupId)
+            ? deviceProvider.activeGroupId
+            : 'all';
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: safeValue,
+              isDense: true,
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              items: [
+                const DropdownMenuItem(value: 'all', child: Text('所有设备')),
+                ...deviceProvider.deviceGroups.map((group) {
+                  return DropdownMenuItem(
+                    value: group.id,
+                    child: Text(group.name),
+                  );
+                }),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  deviceProvider.setActiveGroup(value);
+                }
+              },
             ),
-            ...deviceProvider.deviceGroups.map((group) {
-              return DropdownMenuItem(
-                value: group.id,
-                child: Text(group.name),
-              );
-            }),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              deviceProvider.setActiveGroup(value);
-            }
-          },
+          ),
         );
       },
     );

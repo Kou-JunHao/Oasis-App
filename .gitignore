@@ -54,3 +54,5 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# 其他不需要版本控制的文件
+bug.md
