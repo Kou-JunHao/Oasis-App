@@ -8,6 +8,20 @@ class ApiService {
   late final Dio _dio;
   String? _token;
 
+  Map<String, dynamic> _maskedHeaders(Map<String, dynamic> headers) {
+    final masked = Map<String, dynamic>.from(headers);
+    final auth = masked['authorization'];
+    if (auth is String && auth.isNotEmpty) {
+      if (auth.length <= 8) {
+        masked['authorization'] = '***';
+      } else {
+        masked['authorization'] =
+            '${auth.substring(0, 4)}***${auth.substring(auth.length - 4)}';
+      }
+    }
+    return masked;
+  }
+
   ApiService() {
     _dio = Dio(
       BaseOptions(
@@ -45,7 +59,7 @@ class ApiService {
           // ignore: avoid_print
           print('请求: ${options.method} ${options.uri}');
           // ignore: avoid_print
-          print('请求头: ${options.headers}');
+          print('请求头: ${_maskedHeaders(options.headers)}');
           if (options.data != null) {
             // ignore: avoid_print
             print('请求体: ${options.data}');
@@ -111,11 +125,7 @@ class ApiService {
   }) async {
     final response = await _dio.post(
       'api/v1/acc/login/code',
-      data: {
-        's': s,
-        'authCode': authCode,
-        'un': phoneNumber,
-      },
+      data: {'s': s, 'authCode': authCode, 'un': phoneNumber},
     );
     return ApiResponse.fromJson(response.data, null);
   }
@@ -183,7 +193,8 @@ class ApiService {
 
   /// 添加设备（绑定设备）
   Future<ApiResponse<AddDeviceResponse>> addDevice(
-      AddDeviceRequest request) async {
+    AddDeviceRequest request,
+  ) async {
     final response = await _dio.get(
       'api/v1/dev/favo',
       queryParameters: {
@@ -204,10 +215,7 @@ class ApiService {
   }) async {
     final response = await _dio.get(
       'api/v1/dev/favo',
-      queryParameters: {
-        'did': deviceId,
-        'remove': remove ? 1 : 0,
-      },
+      queryParameters: {'did': deviceId, 'remove': remove ? 1 : 0},
     );
     return ApiResponse.fromJson(response.data, null);
   }
@@ -218,7 +226,9 @@ class ApiService {
   Future<ApiResponse<WalletResponseData>> getWalletBalance() async {
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
-      print('开始获取钱包余额, Token状态: ${_token != null ? "已设置(${_token!.substring(0, 10)}...)" : "未设置"}');
+      print(
+        '开始获取钱包余额, Token状态: ${_token != null ? "已设置(${_token!.substring(0, 10)}...)" : "未设置"}',
+      );
     }
     final response = await _dio.get('api/v1/acc/wallet/owner');
     if (AppConfig.isDebugMode) {
@@ -309,28 +319,26 @@ class ApiService {
 
   /// 创建充值订单
   Future<ApiResponse<String>> createRechargeOrder(
-      BillSaveRequest request) async {
+    BillSaveRequest request,
+  ) async {
     final response = await _dio.post(
       'api/v1/bill/save',
       data: request.toJson(),
     );
-    return ApiResponse.fromJson(
-      response.data,
-      (json) => json as String,
-    );
+    return ApiResponse.fromJson(response.data, (json) => json as String);
   }
 
   /// 获取支付渠道
   Future<ApiResponse<PaymentChannelsResponse>> getPaymentChannels(
-      String orderId) async {
+    String orderId,
+  ) async {
     final response = await _dio.get(
       'api/v1/bill/pay/channels',
       queryParameters: {'id': orderId},
     );
     return ApiResponse.fromJson(
       response.data,
-      (json) =>
-          PaymentChannelsResponse.fromJson(json as Map<String, dynamic>),
+      (json) => PaymentChannelsResponse.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -340,10 +348,7 @@ class ApiService {
       'api/v1/trans/prepay/21',
       queryParameters: {'id': orderId},
     );
-    return ApiResponse.fromJson(
-      response.data,
-      (json) => json as String,
-    );
+    return ApiResponse.fromJson(response.data, (json) => json as String);
   }
 
   // ==================== 通用方法 ====================
@@ -406,4 +411,3 @@ class ApiService {
     );
   }
 }
-

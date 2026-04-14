@@ -88,6 +88,20 @@ class DeviceProvider with ChangeNotifier {
     return _deviceGroups.any((g) => g.id == groupId);
   }
 
+  String _normalizeGroupName(String name) {
+    return name.trim().toLowerCase();
+  }
+
+  bool isGroupNameTaken(String name, {String? excludeGroupId}) {
+    final normalized = _normalizeGroupName(name);
+    if (normalized.isEmpty) return false;
+    return _deviceGroups.any(
+      (group) =>
+          group.id != excludeGroupId &&
+          _normalizeGroupName(group.name) == normalized,
+    );
+  }
+
   void _ensureDefaultGroup() {
     if (_hasGroup('default')) {
       return;
@@ -301,10 +315,15 @@ class DeviceProvider with ChangeNotifier {
   }
 
   /// 创建新分组
-  Future<void> createGroup(String name) async {
+  Future<bool> createGroup(String name) async {
+    final normalizedName = name.trim();
+    if (normalizedName.isEmpty || isGroupNameTaken(normalizedName)) {
+      return false;
+    }
+
     final newGroup = DeviceGroup(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
+      name: normalizedName,
       sortOrder: _deviceGroups.length,
     );
 
@@ -312,19 +331,29 @@ class DeviceProvider with ChangeNotifier {
     _groupsVersion++;
     await _saveDeviceGroups();
     notifyListeners();
+    return true;
   }
 
   /// 重命名分组
-  Future<void> renameGroup(String groupId, String newName) async {
+  Future<bool> renameGroup(String groupId, String newName) async {
+    final normalizedName = newName.trim();
+    if (normalizedName.isEmpty ||
+        isGroupNameTaken(normalizedName, excludeGroupId: groupId)) {
+      return false;
+    }
+
     final groupIndex = _deviceGroups.indexWhere((g) => g.id == groupId);
     if (groupIndex != -1) {
       _deviceGroups[groupIndex] = _deviceGroups[groupIndex].copyWith(
-        name: newName,
+        name: normalizedName,
       );
       _groupsVersion++;
       await _saveDeviceGroups();
       notifyListeners();
+      return true;
     }
+
+    return false;
   }
 
   /// 删除分组（设备会移动到默认分组）
@@ -420,9 +449,7 @@ class DeviceProvider with ChangeNotifier {
     try {
       if (!silent) {
         _isLoading = true;
-      }
-      _error = null;
-      if (!silent) {
+        _error = null;
         notifyListeners();
       }
 
@@ -432,11 +459,13 @@ class DeviceProvider with ChangeNotifier {
         _devices = response.data!.devices;
         _markDeviceOrderDirty();
         _error = null;
-      } else {
+      } else if (!silent) {
         _error = response.message ?? '获取设备列表失败';
       }
     } catch (e) {
-      _error = '网络错误: $e';
+      if (!silent) {
+        _error = '网络错误: $e';
+      }
       if (kDebugMode) {
         print('获取设备列表失败: $e');
       }

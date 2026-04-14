@@ -15,7 +15,8 @@ class DeviceScreen extends StatefulWidget {
   State<DeviceScreen> createState() => _DeviceScreenState();
 }
 
-class _DeviceScreenState extends State<DeviceScreen> {
+class _DeviceScreenState extends State<DeviceScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
   List<DeviceDetail> _allDevices = [];
   List<DeviceDetail> _filteredDevices = [];
@@ -27,6 +28,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final deviceProvider = Provider.of<DeviceProvider>(
         context,
@@ -38,7 +40,25 @@ class _DeviceScreenState extends State<DeviceScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        deviceProvider.startDevicePolling();
+        deviceProvider.fetchDevices(silent: true);
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        deviceProvider.stopDevicePolling();
+        break;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     Provider.of<DeviceProvider>(context, listen: false).stopDevicePolling();
     _searchController.dispose();
     super.dispose();
@@ -71,30 +91,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
         }).toList();
       });
     }
-  }
-
-  /// 构建设备卡片的分组标签
-  Widget _buildGroupTag(BuildContext context, DeviceDetail device, DeviceProvider deviceProvider) {
-    final groupId = deviceProvider.getDeviceGroupId(device.id);
-    final groupName = deviceProvider.getGroupName(groupId);
-
-    if (groupId == 'default') {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        groupName,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
-      ),
-    );
   }
 
   /// 显示设备操作菜单（简化版）
@@ -178,21 +174,21 @@ class _DeviceScreenState extends State<DeviceScreen> {
                 floating: false,
                 pinned: true,
                 actions: [
-                    const GroupSelectorDropdown(),
-                    IconButton(
-                      icon: const Icon(Icons.group_rounded),
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (context) => const DeviceGroupDialog(),
-                      ),
-                      tooltip: '分组管理',
+                  const GroupSelectorDropdown(),
+                  IconButton(
+                    icon: const Icon(Icons.group_rounded),
+                    onPressed: () => showDialog(
+                      context: context,
+                      builder: (context) => const DeviceGroupDialog(),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add_rounded),
-                      onPressed: () => _showDeviceManagementMenu(context),
-                      tooltip: '添加设备',
-                    ),
-                  ],
+                    tooltip: '分组管理',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_rounded),
+                    onPressed: () => _showDeviceManagementMenu(context),
+                    tooltip: '添加设备',
+                  ),
+                ],
               ),
 
               // 搜索栏
@@ -602,7 +598,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
 
     if (result != null && context.mounted) {
-      final deviceId = result['deviceId'] ?? '';
+      final deviceId = (result['deviceId'] ?? '').trim();
 
       if (deviceId.isEmpty) {
         ScaffoldMessenger.of(
@@ -637,22 +633,37 @@ class _DeviceScreenState extends State<DeviceScreen> {
           context,
           listen: false,
         );
-        await deviceProvider.addDevice(deviceId);
+        final success = await deviceProvider.addDevice(deviceId);
 
         if (context.mounted) {
           Navigator.of(context).pop(); // 关闭加载指示器
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('设备添加成功'),
-                ],
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text('设备添加成功'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
               ),
-              backgroundColor: Colors.green,
-            ),
-          );
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(deviceProvider.error ?? '设备添加失败')),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (context.mounted) {
@@ -674,6 +685,39 @@ class _DeviceScreenState extends State<DeviceScreen> {
     }
   }
 
+  String _extractDeviceIdFromQr(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null) {
+      const queryKeys = ['did', 'deviceId', 'device_id', 'id'];
+      for (final key in queryKeys) {
+        final value = uri.queryParameters[key]?.trim();
+        if (value != null && value.isNotEmpty) {
+          return value;
+        }
+      }
+
+      if (uri.pathSegments.isNotEmpty) {
+        final last = uri.pathSegments.last.trim();
+        if (last.isNotEmpty && !last.contains('.')) {
+          return last;
+        }
+      }
+    }
+
+    final keyValueMatch = RegExp(
+      r'(?:did|deviceId|device_id|id)\s*[:=]\s*([A-Za-z0-9_-]+)',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (keyValueMatch != null) {
+      return keyValueMatch.group(1) ?? trimmed;
+    }
+
+    return trimmed;
+  }
+
   void _showScanQRCode(BuildContext context) async {
     // 使用真实的二维码扫描器
     final String? qrCode = await Navigator.push<String>(
@@ -682,6 +726,17 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
 
     if (qrCode != null && qrCode.isNotEmpty && context.mounted) {
+      final deviceId = _extractDeviceIdFromQr(qrCode);
+      if (deviceId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('未识别到有效设备ID，请尝试手动输入'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       // 显示加载指示器
       showDialog(
         context: context,
@@ -708,22 +763,37 @@ class _DeviceScreenState extends State<DeviceScreen> {
           context,
           listen: false,
         );
-        await deviceProvider.addDevice(qrCode);
+        final success = await deviceProvider.addDevice(deviceId);
 
         if (context.mounted) {
           Navigator.of(context).pop(); // 关闭加载指示器
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text('设备添加成功'),
-                ],
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text('设备添加成功'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
               ),
-              backgroundColor: Colors.green,
-            ),
-          );
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(deviceProvider.error ?? '设备添加失败')),
+                  ],
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (context.mounted) {
@@ -770,8 +840,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
         onTap: () {
           // TODO: 跳转到设备详情页
         },
-        onLongPress: () =>
-            _showSimpleDeviceActionMenu(context, device),
+        onLongPress: () => _showSimpleDeviceActionMenu(context, device),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -896,9 +965,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   _DeviceStatusChip(device: device),
                 ],
               ),
-              // 分组标签
-              _buildGroupTag(context, device, deviceProvider),
-
               // 设备地址(如果有)
               if (device.address?.detail != null) ...[
                 const SizedBox(height: 12),
