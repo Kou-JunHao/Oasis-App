@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # Flutter --split-per-abi 会为每个架构添加 2000 偏移
 # 版本码 202 → arm64-v8a: 2202, armeabi-v7a: 2203, x86_64: 2204
 # 更新检查基于 versionName (2.0.2) 而非 versionCode，所以不受影响
-version: 2.0.2+202
+version: 2.0.3+203
 
 environment:
   sdk: ^3.9.2

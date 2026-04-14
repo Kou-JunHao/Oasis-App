@@ -42,6 +42,6 @@ class AppConfig {
   // 缓存配置
   static const Duration cacheExpiry = Duration(hours: 24);
 
-  // 调试模式
-  static const bool isDebugMode = true; // 发布时设置为 false
+  // 日志开关（按当前需求：release 保留日志）
+  static const bool isDebugMode = true;
 }
