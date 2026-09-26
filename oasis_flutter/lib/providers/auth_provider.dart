@@ -22,6 +22,8 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._apiService) {
     _authService = AuthService(_apiService);
+    // 服务端判定登录态失效（code=-99 / HTTP 401）时，清理本地登录态并回到登录页
+    _apiService.onSessionExpired = _handleSessionExpired;
     _initFuture = _initPreferences();
   }
 
@@ -32,6 +34,28 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isInitialized => _isInitialized;
+
+  /// 是否因服务端会话失效而被登出（用于提示用户）
+  bool get sessionExpired => _sessionExpired;
+  bool _sessionExpired = false;
+
+  /// UI 已提示过后清除标记
+  void acknowledgeSessionExpired() {
+    _sessionExpired = false;
+  }
+
+  /// 处理服务端会话失效：等价于被动登出
+  Future<void> _handleSessionExpired() async {
+    if (!_isLoggedIn && _token == null) return;
+
+    _sessionExpired = true;
+    _token = null;
+    _user = null;
+    _isLoggedIn = false;
+    _apiService.clearToken();
+    await _clearUserData();
+    notifyListeners();
+  }
 
   /// 初始化 SharedPreferences
   Future<void> _initPreferences() async {

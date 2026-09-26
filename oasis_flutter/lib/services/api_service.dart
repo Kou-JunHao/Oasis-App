@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../models/api_models.dart';
 import '../models/auth_models.dart';
@@ -8,6 +9,35 @@ import 'client_version_service.dart';
 class ApiService {
   late final Dio _dio;
   String? _token;
+
+  /// 服务端表示「登录状态已过期」的业务码（HTTP 200 + code=-99 + msg=登录状态已过期）
+  static const int codeSessionExpired = -99;
+
+  /// 会话失效回调：由 AuthProvider 注册，用于清理登录态并回到登录页
+  void Function()? onSessionExpired;
+
+  /// 防止并发请求同时触发多次登出
+  bool _sessionExpiredNotified = false;
+
+  /// 判断响应体是否表示登录态已失效（纯函数，便于测试）
+  @visibleForTesting
+  static bool isSessionExpiredPayload(dynamic data) {
+    if (data is Map) {
+      final code = data['code'];
+      return code is num && code.toInt() == codeSessionExpired;
+    }
+    return false;
+  }
+
+  void _notifySessionExpired(String reason) {
+    if (_sessionExpiredNotified) return;
+    _sessionExpiredNotified = true;
+    if (AppConfig.isDebugMode) {
+      // ignore: avoid_print
+      print('检测到登录状态失效（$reason），触发自动登出');
+    }
+    onSessionExpired?.call();
+  }
 
   Map<String, dynamic> _maskedHeaders(Map<String, dynamic> headers) {
     final masked = Map<String, dynamic>.from(headers);
@@ -80,6 +110,10 @@ class ApiService {
         return handler.next(options);
       },
       onResponse: (response, handler) {
+        // 登录态失效时服务端返回 HTTP 200 + code=-99，必须主动识别并登出
+        if (isSessionExpiredPayload(response.data)) {
+          _notifySessionExpired('code=$codeSessionExpired');
+        }
         if (AppConfig.isDebugMode) {
           // ignore: avoid_print
           print('响应: ${response.statusCode} ${response.requestOptions.uri}');
@@ -89,6 +123,11 @@ class ApiService {
         return handler.next(response);
       },
       onError: (error, handler) {
+        // 部分接口可能直接返回 401/403
+        final status = error.response?.statusCode;
+        if (status == 401 || status == 403) {
+          _notifySessionExpired('HTTP $status');
+        }
         if (AppConfig.isDebugMode) {
           // ignore: avoid_print
           print('错误: ${error.message}');
@@ -103,6 +142,8 @@ class ApiService {
   /// 设置 Token
   void setToken(String token) {
     _token = token;
+    // 重新登录后重新武装会话失效检测
+    _sessionExpiredNotified = false;
     if (AppConfig.isDebugMode) {
       // ignore: avoid_print
       print('ApiService Token已设置: ${token.substring(0, 10)}...');

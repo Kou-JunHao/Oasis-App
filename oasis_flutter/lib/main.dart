@@ -14,6 +14,10 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'widgets/disclaimer_dialog.dart';
 
+/// 全局 SnackBar 载体：会话失效时无论当前在哪个页面都能提示
+final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -131,6 +135,16 @@ class _OasisAppState extends State<OasisApp> {
         // 同步token到ApiService（仅在Token变化时）
         _syncTokenIfNeeded(authProvider.token);
 
+        // 服务端会话失效：已自动登出并回到登录页，这里给出提示
+        if (authProvider.sessionExpired) {
+          authProvider.acknowledgeSessionExpired();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            appScaffoldMessengerKey.currentState?.showSnackBar(
+              const SnackBar(content: Text('登录状态已过期，请重新登录')),
+            );
+          });
+        }
+
         return DynamicColorBuilder(
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             // 更新动态颜色方案
@@ -150,6 +164,7 @@ class _OasisAppState extends State<OasisApp> {
             return MaterialApp(
               title: 'Oasis',
               debugShowCheckedModeBanner: false,
+              scaffoldMessengerKey: appScaffoldMessengerKey,
               theme: themeProvider.getLightTheme(),
               darkTheme: themeProvider.getDarkTheme(),
               themeMode: themeProvider.themeMode,
