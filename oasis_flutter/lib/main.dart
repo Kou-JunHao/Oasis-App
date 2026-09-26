@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -7,12 +9,17 @@ import 'providers/device_provider.dart';
 import 'providers/wallet_provider.dart';
 import 'providers/order_provider.dart';
 import 'services/api_service.dart';
+import 'services/client_version_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'widgets/disclaimer_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 启动即异步解析伪装版本号（用户自定义 > 线上最新 > 缓存 > 基线）。
+  // 不 await：网络慢或离线时也不阻塞启动，首个请求会按超时取当前已知值。
+  unawaited(ClientVersionService.resolve());
 
   // 创建API服务单例
   final apiService = ApiService();

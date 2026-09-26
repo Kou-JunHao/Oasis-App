@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/auth_provider.dart';
 import '../theme/theme_provider.dart';
+import '../services/client_version_service.dart';
 import '../utils/github_update_checker.dart';
 import '../utils/github_mirror_config.dart';
 import '../utils/apk_installer.dart';
@@ -35,6 +36,10 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   @override
   bool get wantKeepAlive => true;
 
+  /// 列表里展示用的简短构建时间（精确到分钟，避免窄屏折行过多）
+  String get _buildDateShort =>
+      _buildDate.length >= 16 ? _buildDate.substring(0, 16) : _buildDate;
+
   @override
   void initState() {
     super.initState();
@@ -42,8 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   }
 
   /// 加载应用版本信息
-  Future<void> _loadAppVersion() async {
-    try {
+  Future<void> _loadAppVersion() async {    try {
       final packageInfo = await PackageInfo.fromPlatform();
       
       // 从原生代码获取构建时间戳
@@ -1069,6 +1073,70 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
     }
   }
 
+  /// 设置伪装版本号（请求头 versioncode / User-Agent 冒称的原厂版本）
+  Future<void> _showClientVersionDialog(ClientVersionStatus status) async {
+    final isCustom = status.source == 'custom';
+
+    final result = await showInputBottomSheet(
+      context: context,
+      title: '伪装版本号',
+      icon: Icons.badge_outlined,
+      confirmText: '保存',
+      fields: [
+        InputField(
+          key: 'version',
+          label: '版本号',
+          hint: '例如：3.1.9',
+          helper: isCustom
+              ? '留空保存可恢复自动获取'
+              : '留空保存 = 自动获取 · 当前 ${status.version}',
+          icon: Icons.tag_rounded,
+          initialValue: isCustom ? status.version : '',
+          keyboardType: TextInputType.text,
+          validator: (value) {
+            final v = (value ?? '').trim();
+            if (v.isEmpty) return null; // 留空 = 恢复自动获取
+            if (!ClientVersionService.isValidVersion(v)) {
+              return '格式应为 x.y 或 x.y.z，例如 3.1.9';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+
+    if (result == null || !mounted) return;
+
+    final value = (result['version'] ?? '').trim();
+    if (value.isEmpty) {
+      await ClientVersionService.clearCustomVersion();
+      if (!mounted) return;
+      _showSuccessSnackBar('已恢复自动获取伪装版本号');
+    } else {
+      await ClientVersionService.setCustomVersion(value);
+      if (!mounted) return;
+      _showSuccessSnackBar('伪装版本号已设为 $value，下次请求生效');
+    }
+  }
+
+  /// 显示成功提示
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   /// 显示错误提示
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1100,6 +1168,12 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
     final themeProvider = Provider.of<ThemeProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
+    // 响应式：宽屏（平板/折叠屏/横屏）下把内容限制在 720dp 内并居中，
+    // 避免卡片被拉得过宽；窄屏保持 16dp 边距
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final horizontalPadding =
+        screenWidth > 720 ? (screenWidth - 720) / 2 : 16.0;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -1111,7 +1185,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
           ),
           
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(horizontalPadding, 16, horizontalPadding, 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // 用户信息卡片
@@ -1163,33 +1237,28 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                         },
                       ),
                       const Divider(height: 1, indent: 72),
-                      ListTile(
-                        leading: Icon(Icons.color_lens_rounded, color: colorScheme.primary),
-                        title: const Text('主题模式'),
-                        subtitle: const Text('选择浅色、深色或跟随系统'),
-                        trailing: SegmentedButton<ThemeMode>(
-                          showSelectedIcon: false,
-                          segments: const [
-                            ButtonSegment(
-                              value: ThemeMode.light,
-                              icon: Icon(Icons.light_mode_rounded, size: 18),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.dark,
-                              icon: Icon(Icons.dark_mode_rounded, size: 18),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.system,
-                              icon: Icon(Icons.brightness_auto_rounded, size: 18),
-                            ),
-                          ],
-                          selected: {themeProvider.themeMode},
-                          onSelectionChanged: (Set<ThemeMode> newSelection) {
-                            themeProvider.setThemeMode(newSelection.first);
-                          },
-                        ),
+                      _ThemeModeTile(
+                        value: themeProvider.themeMode,
+                        onChanged: (mode) => themeProvider.setThemeMode(mode),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 高级设置
+                _SectionHeader(title: '高级设置'),
+                const SizedBox(height: 12),
+                Card(
+                  child: ValueListenableBuilder<ClientVersionStatus>(
+                    valueListenable: ClientVersionService.statusNotifier,
+                    builder: (context, status, _) => ListTile(
+                      leading: Icon(Icons.badge_rounded, color: colorScheme.primary),
+                      title: const Text('伪装版本号'),
+                      subtitle: Text('${status.version} · ${status.sourceLabel}'),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => _showClientVersionDialog(status),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1203,7 +1272,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                       ListTile(
                         leading: Icon(Icons.info_rounded, color: colorScheme.primary),
                         title: const Text('应用信息'),
-                        subtitle: Text('版本 $_appVersion • 构建于 $_buildDate'),
+                        subtitle: Text('版本 $_appVersion • 构建于 $_buildDateShort'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: _showAppInfoDialog,
                       ),
@@ -1355,6 +1424,78 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   }
 }
 
+/// 主题模式设置项
+///
+/// 响应式：宽屏且字体不大时，分段按钮作为 [ListTile.trailing] 同行显示；
+/// 窄屏（手机竖屏）或系统大字体时，改为标题下方整行显示，
+/// 避免标题/副标题被横向挤压成竖排单字。
+class _ThemeModeTile extends StatelessWidget {
+  final ThemeMode value;
+  final ValueChanged<ThemeMode> onChanged;
+
+  const _ThemeModeTile({required this.value, required this.onChanged});
+
+  /// 分段按钮本身约需 200dp，标题+副标题也要留够宽度
+  static const double _inlineMinWidth = 420;
+
+  static const List<ButtonSegment<ThemeMode>> _segments = [
+    ButtonSegment(
+      value: ThemeMode.light,
+      icon: Icon(Icons.light_mode_rounded, size: 18),
+      tooltip: '浅色',
+    ),
+    ButtonSegment(
+      value: ThemeMode.dark,
+      icon: Icon(Icons.dark_mode_rounded, size: 18),
+      tooltip: '深色',
+    ),
+    ButtonSegment(
+      value: ThemeMode.system,
+      icon: Icon(Icons.brightness_auto_rounded, size: 18),
+      tooltip: '跟随系统',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final scaledBody = MediaQuery.textScalerOf(context).scale(14);
+
+    final button = SegmentedButton<ThemeMode>(
+      showSelectedIcon: false,
+      segments: _segments,
+      selected: {value},
+      onSelectionChanged: (selection) => onChanged(selection.first),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final inline = constraints.maxWidth >= _inlineMinWidth && scaledBody <= 18;
+
+        final tile = ListTile(
+          leading: Icon(Icons.color_lens_rounded, color: colorScheme.primary),
+          title: const Text('主题模式'),
+          subtitle: const Text('选择浅色、深色或跟随系统'),
+          trailing: inline ? button : null,
+        );
+
+        if (inline) return tile;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            tile,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(72, 0, 16, 12),
+              child: SizedBox(width: double.infinity, child: button),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// 区段标题
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -1423,6 +1564,8 @@ class _UserInfoCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -1433,10 +1576,14 @@ class _UserInfoCard extends StatelessWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          user?.phone ?? '',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                        Expanded(
+                          child: Text(
+                            user?.phone ?? '',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -1475,20 +1622,26 @@ class _InfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

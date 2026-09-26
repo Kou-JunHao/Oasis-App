@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 import '../models/api_models.dart';
 import '../models/auth_models.dart';
+import 'client_version_service.dart';
 
 /// API 服务类
 class ApiService {
@@ -30,7 +31,8 @@ class ApiService {
         receiveTimeout: AppConfig.apiTimeout,
         headers: {
           'Content-Type': 'application/json',
-          ...AppConfig.commonHeaders,
+          // 这里的版本号只是初始值，实际每次请求由拦截器按当前生效值覆盖
+          ...AppConfig.commonHeadersFor(ClientVersionService.current),
         },
       ),
     );
@@ -42,7 +44,13 @@ class ApiService {
   /// 创建拦截器
   Interceptor _createInterceptor() {
     return InterceptorsWrapper(
-      onRequest: (options, handler) {
+      onRequest: (options, handler) async {
+        // 伪装版本号：动态获取（用户自定义 > 线上最新 > 缓存 > 基线），
+        // 带超时等待，超时则先用当前已知值，不阻塞请求
+        final clientVersion = await ClientVersionService.resolveBounded();
+        options.headers['versioncode'] = clientVersion;
+        options.headers['User-Agent'] = 'Android_ilife798_$clientVersion';
+
         // 添加 token
         if (_token != null && _token!.isNotEmpty) {
           options.headers['authorization'] = _token;
@@ -58,6 +66,10 @@ class ApiService {
         if (AppConfig.isDebugMode) {
           // ignore: avoid_print
           print('请求: ${options.method} ${options.uri}');
+          // ignore: avoid_print
+          print(
+            '伪装版本号: $clientVersion (来源: ${ClientVersionService.statusNotifier.value.sourceLabel})',
+          );
           // ignore: avoid_print
           print('请求头: ${_maskedHeaders(options.headers)}');
           if (options.data != null) {

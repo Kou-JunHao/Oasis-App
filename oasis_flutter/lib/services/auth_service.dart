@@ -24,21 +24,10 @@ class AuthService {
   /// 获取短信验证码
   Future<void> getSmsCode(GetCodeRequest request) async {
     try {
+      // 版本相关请求头由 ApiService 拦截器统一注入
       final response = await _apiService.post(
         '/api/v1/acc/login/code',
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'Connection': 'keep-alive',
-            'applicationtype': '1,1',
-            'Accept': '*/*',
-            'User-Agent': 'Android_ilife798_3.1.4',
-            'Accept-Language': 'zh-TW,zh-Hant;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'versioncode': '3.1.4',
-          },
-        ),
       );
 
       if (response.statusCode == 200) {
@@ -82,21 +71,10 @@ class AuthService {
   /// 用户登录
   Future<LoginResponse> login(LoginRequest request) async {
     try {
+      // 版本相关请求头由 ApiService 拦截器统一注入
       final response = await _apiService.post(
         '/api/v1/acc/login',
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'Connection': 'keep-alive',
-            'applicationtype': '1,1',
-            'Accept': '*/*',
-            'User-Agent': 'Android_ilife798_3.1.4',
-            'Accept-Language': 'zh-TW,zh-Hant;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'versioncode': '3.1.4',
-          },
-        ),
       );
 
       if (response.statusCode == 200) {
