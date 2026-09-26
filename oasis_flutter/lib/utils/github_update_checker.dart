@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
@@ -102,7 +103,7 @@ class GitHubUpdateChecker {
         print('当前版本: $currentVersion, 最新版本: ${latestVersionInfo.version}');
       }
 
-      if (_isNewerVersion(currentVersion, latestVersionInfo.version)) {
+      if (isNewerVersion(currentVersion, latestVersionInfo.version)) {
         if (kDebugMode) {
           print('发现新版本: ${latestVersionInfo.version}');
         }
@@ -177,7 +178,7 @@ class GitHubUpdateChecker {
         // 手动解码UTF-8，允许格式错误
         final bodyText = utf8.decode(response.bodyBytes, allowMalformed: true);
         final jsonData = jsonDecode(bodyText);
-        return _parseVersionInfo(jsonData);
+        return await _parseVersionInfo(jsonData);
       } else {
         if (kDebugMode) {
           print('GitHub API请求失败，响应码: ${response.statusCode}');
@@ -204,7 +205,7 @@ class GitHubUpdateChecker {
   }
 
   /// 解析GitHub API返回的版本信息
-  static _VersionInfo? _parseVersionInfo(Map<String, dynamic> json) {
+  static Future<_VersionInfo?> _parseVersionInfo(Map<String, dynamic> json) async {
     try {
       final tagName = json['tag_name'] as String;
       final releaseName = json['name'] as String? ?? '';
@@ -230,57 +231,13 @@ class GitHubUpdateChecker {
       
       if (Platform.isAndroid) {
         // 获取设备CPU架构
-        final deviceAbi = _getDeviceAbi();
+        final deviceAbi = await _getDeviceAbi();
         
         if (kDebugMode) {
           print('设备架构: $deviceAbi');
         }
-        
-        // 优先查找匹配设备架构的APK
-        for (final asset in assets) {
-          final name = asset['name'] as String;
-          if (name.toLowerCase().endsWith('.apk')) {
-            // 检查是否匹配设备架构
-            if (name.toLowerCase().contains(deviceAbi.toLowerCase())) {
-              downloadUrl = asset['browser_download_url'] as String;
-              if (kDebugMode) {
-                print('找到匹配架构的APK: $name');
-              }
-              break;
-            }
-          }
-        }
-        
-        // 如果没有找到匹配架构的，查找universal版本
-        if (downloadUrl.isEmpty) {
-          for (final asset in assets) {
-            final name = asset['name'] as String;
-            if (name.toLowerCase().endsWith('.apk') && 
-                (name.toLowerCase().contains('universal') || 
-                 !name.toLowerCase().contains('arm') && 
-                 !name.toLowerCase().contains('x86'))) {
-              downloadUrl = asset['browser_download_url'] as String;
-              if (kDebugMode) {
-                print('找到通用APK: $name');
-              }
-              break;
-            }
-          }
-        }
-        
-        // 如果还是没找到，使用第一个APK
-        if (downloadUrl.isEmpty) {
-          for (final asset in assets) {
-            final name = asset['name'] as String;
-            if (name.toLowerCase().endsWith('.apk')) {
-              downloadUrl = asset['browser_download_url'] as String;
-              if (kDebugMode) {
-                print('使用第一个找到的APK: $name');
-              }
-              break;
-            }
-          }
-        }
+
+        downloadUrl = pickApkUrlForAbi(assets, deviceAbi);
       } else {
         // 非Android平台，直接查找第一个APK
         for (final asset in assets) {
@@ -353,8 +310,9 @@ class GitHubUpdateChecker {
     }
   }
 
-  /// 比较版本号
-  static bool _isNewerVersion(String currentVersion, String latestVersion) {
+  /// 比较版本号（[latestVersion] 是否比 [currentVersion] 新）
+  @visibleForTesting
+  static bool isNewerVersion(String currentVersion, String latestVersion) {
     try {
       final currentCode = _extractVersionCode(currentVersion);
       final latestCode = _extractVersionCode(latestVersion);
@@ -416,39 +374,85 @@ class GitHubUpdateChecker {
     }
   }
 
+  /// 从 release 资产中挑选与设备架构匹配的 APK 下载地址（纯函数，便于测试）
+  ///
+  /// 依次尝试：精确匹配 `app-<abi>-release.apk` → 文件名包含架构标识 →
+  /// universal/通用包 → 第一个 APK。返回空字符串表示没有可用的 APK。
+  @visibleForTesting
+  static String pickApkUrlForAbi(List<dynamic> assets, String deviceAbi) {
+    String urlOf(dynamic asset) => asset['browser_download_url'] as String;
+    String nameOf(dynamic asset) => (asset['name'] as String).toLowerCase();
+
+    // 1) 精确匹配发布规范里的命名，避免 'x86' 命中 'x86_64' 这类子串误判
+    final exactName = 'app-${deviceAbi.toLowerCase()}-release.apk';
+    for (final asset in assets) {
+      if (nameOf(asset) == exactName) {
+        return urlOf(asset);
+      }
+    }
+
+    // 2) 文件名包含架构标识
+    for (final asset in assets) {
+      final name = nameOf(asset);
+      if (name.endsWith('.apk') && name.contains(deviceAbi.toLowerCase())) {
+        return urlOf(asset);
+      }
+    }
+
+    // 3) universal / 未标注架构的通用包
+    for (final asset in assets) {
+      final name = nameOf(asset);
+      if (name.endsWith('.apk') &&
+          (name.contains('universal') ||
+              (!name.contains('arm') && !name.contains('x86')))) {
+        return urlOf(asset);
+      }
+    }
+
+    // 4) 兜底：第一个 APK
+    for (final asset in assets) {
+      if (nameOf(asset).endsWith('.apk')) {
+        return urlOf(asset);
+      }
+    }
+
+    return '';
+  }
+
   /// 获取设备CPU架构
-  static String _getDeviceAbi() {
+  ///
+  /// 直接读取系统上报的 ABI 列表（已按优先级排序），不再用 Platform.version
+  /// 字符串去猜：那种写法里 `contains('x64')` 会先命中第一分支、把 x86_64 设备
+  /// 误判成 arm64-v8a，而 `contains('x86')` 又会命中 'x86_64'。
+  static Future<String> _getDeviceAbi() async {
+    if (!Platform.isAndroid) return 'unknown';
+
+    // 与发布资产命名保持一致的四种架构
+    const knownAbis = ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'];
+
     try {
-      if (Platform.isAndroid) {
-        // 获取支持的ABI列表
-        final abis = <String>[];
-        
-        // Android设备通常支持多个ABI，按优先级排序
-        // 64位设备通常支持：arm64-v8a, armeabi-v7a, armeabi
-        // 32位设备通常支持：armeabi-v7a, armeabi
-        
-        // 通过Dart VM判断是否为64位
-        if (Platform.version.contains('x64') || Platform.version.contains('arm64')) {
-          // 64位ARM
-          return 'arm64-v8a';
-        } else if (Platform.version.contains('ia32') || Platform.version.contains('x86')) {
-          // 32位x86
-          return 'x86';
-        } else if (Platform.version.contains('x64')) {
-          // 64位x86
-          return 'x86_64';
-        } else {
-          // 默认32位ARM
-          return 'armeabi-v7a';
+      final info = await DeviceInfoPlugin().androidInfo;
+      final abis = info.supportedAbis;
+
+      if (kDebugMode) {
+        print('系统上报的ABI列表: $abis');
+      }
+
+      for (final abi in abis) {
+        if (knownAbis.contains(abi)) {
+          return abi;
         }
       }
-      return 'unknown';
+      if (abis.isNotEmpty) {
+        return abis.first;
+      }
     } catch (e) {
       if (kDebugMode) {
         print('获取设备架构失败: $e');
       }
-      // 默认返回最常见的ARM 64位架构
-      return 'arm64-v8a';
     }
+
+    // 兜底：绝大多数真机是 arm64
+    return 'arm64-v8a';
   }
 }
