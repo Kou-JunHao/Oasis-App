@@ -442,6 +442,12 @@ class WalletOwner {
 }
 
 /// 订单列表响应
+int _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse('${value ?? ''}') ?? 0;
+}
+
 class OrderListResponse {
   final List<OrderData> orders;
   final int totalElements;
@@ -457,7 +463,10 @@ class OrderListResponse {
       orders: dataList != null && dataList is List
           ? dataList.map((e) => OrderData.fromJson(e as Map<String, dynamic>)).toList()
           : [],
-      totalElements: (json['totalElements'] ?? json['total'] ?? 0) as int,
+      // 服务端在 hasCount=1 时用 size 字段返回总数
+      totalElements: _asInt(
+        json['totalElements'] ?? json['total'] ?? json['size'],
+      ),
     );
   }
 }

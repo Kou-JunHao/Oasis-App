@@ -57,6 +57,13 @@ class ScoreSigner {
   }
 }
 
+/// 宽松解析整数：服务端的总数可能是字符串（如 "6"）
+int _parseIntLenient(dynamic value, int fallback) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString().trim() ?? '') ?? fallback;
+}
+
 /// 提交结果
 class ScoreSubmitResult {
   final bool success;
@@ -147,14 +154,25 @@ class ScoreService {
     return overview;
   }
 
-  /// 积分明细 / 服务端执行记录
-  Future<List<ScoreRecord>> fetchRecords({int size = 50}) async {
+  /// 积分明细 / 服务端执行记录（分页）
+  ///
+  /// 服务端在 `hasCount=1` 时会在响应里带上 `size` 字段（总数）。
+  Future<({List<ScoreRecord> items, int total})> fetchRecords({
+    int page = 0,
+    int size = 20,
+  }) async {
     final response = await _api.get(
       'api/v1/acc/score/score-lst',
-      queryParameters: {'page': 0, 'size': size, 'hasCount': 1},
+      queryParameters: {'page': page, 'size': size, 'hasCount': 1},
     );
     _syncClock(response);
-    return parseScoreRecords(response.data);
+    final items = parseScoreRecords(response.data);
+    final body = response.data;
+    // 注意：服务端返回的 size 是字符串（如 "9"），需要宽松解析
+    final total = body is Map
+        ? _parseIntLenient(body['size'], items.length)
+        : items.length;
+    return (items: items, total: total);
   }
 
   /// 每日签到

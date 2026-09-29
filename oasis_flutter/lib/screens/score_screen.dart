@@ -413,13 +413,37 @@ class _ScoreScreenState extends State<ScoreScreen> {
                 )
               : Column(
                   children: [
-                    for (var i = 0; i < records.length && i < 30; i++) ...[
+                    for (var i = 0; i < records.length; i++) ...[
                       if (i > 0) const Divider(height: 1, indent: 72),
                       _buildRecordTile(context, records[i]),
                     ],
                   ],
                 ),
         ),
+        if (provider.hasMoreRecords)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OutlinedButton.icon(
+              onPressed: provider.isLoadingMoreRecords
+                  ? null
+                  : provider.loadMoreRecords,
+              icon: provider.isLoadingMoreRecords
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.expand_more_rounded, size: 18),
+              label: Text(
+                provider.isLoadingMoreRecords
+                    ? '加载中…'
+                    : '加载更多（已显示 ${records.length}/${provider.recordTotal}）',
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+              ),
+            ),
+          ),
       ],
     );
   }

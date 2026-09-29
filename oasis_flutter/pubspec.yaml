@@ -17,9 +17,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 # Flutter --split-per-abi 会为每个架构添加 2000 偏移
-# 版本码 207 → arm64-v8a: 2207, armeabi-v7a: 2208, x86_64: 2209
-# 更新检查基于 versionName (2.0.7) 而非 versionCode，所以不受影响
-version: 2.0.7+207
+# 版本码 208 → arm64-v8a: 2208, armeabi-v7a: 2209, x86_64: 2210
+# 更新检查基于 versionName (2.0.8) 而非 versionCode，所以不受影响
+version: 2.0.8+208
 
 environment:
   sdk: ^3.9.2

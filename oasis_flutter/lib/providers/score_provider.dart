@@ -28,6 +28,9 @@ class ScoreProvider extends ChangeNotifier {
   /// 服务端限制：同一账号 30 秒内只能提交一次
   static const Duration submitInterval = Duration(seconds: 30);
 
+  /// 积分明细每页条数
+  static const int recordPageSize = 20;
+
   ScoreOverview _overview = ScoreOverview.empty;
   List<ScoreRecord> _records = const [];
   final List<ScoreLogEntry> _logs = [];
@@ -37,6 +40,9 @@ class ScoreProvider extends ChangeNotifier {
   String? _error;
   DateTime? _lastSubmitAt;
   bool _loadedOnce = false;
+  bool _isLoadingMoreRecords = false;
+  int _recordPage = 0;
+  int _recordTotal = 0;
 
   ScoreOverview get overview => _overview;
   List<ScoreRecord> get records => _records;
@@ -50,6 +56,14 @@ class ScoreProvider extends ChangeNotifier {
   int get weekDay => DateTime.now().weekday;
 
   bool get signedInToday => _overview.daily?.signedOn(weekDay) ?? false;
+
+  /// 积分明细总数（服务端）
+  int get recordTotal => _recordTotal;
+
+  /// 是否还有更多积分明细
+  bool get hasMoreRecords => _records.length < _recordTotal;
+
+  bool get isLoadingMoreRecords => _isLoadingMoreRecords;
 
   /// 冷却剩余时间，null 表示可以提交
   Duration? get cooldownRemaining {
@@ -98,10 +112,15 @@ class ScoreProvider extends ChangeNotifier {
       }
       _overview = await _service.fetchOverview();
       try {
-        _records = await _service.fetchRecords();
+        final page = await _service.fetchRecords(page: 0, size: recordPageSize);
+        _records = page.items;
+        _recordTotal = page.total;
+        _recordPage = 0;
       } catch (e) {
         // 明细失败不影响主信息
         _records = const [];
+        _recordTotal = 0;
+        _recordPage = 0;
         _recordError('积分明细获取失败: $e');
       }
     } catch (e) {
@@ -219,6 +238,35 @@ class ScoreProvider extends ChangeNotifier {
       await refresh();
     }
     return result;
+  }
+
+  /// 加载下一页积分明细（追加）
+  Future<void> loadMoreRecords() async {
+    if (_isLoadingMoreRecords || _loading || !hasMoreRecords) return;
+    _isLoadingMoreRecords = true;
+    notifyListeners();
+    try {
+      final nextPage = _recordPage + 1;
+      final page = await _service.fetchRecords(
+        page: nextPage,
+        size: recordPageSize,
+      );
+      // 明细没有唯一 id，用「时间+标题+分值+adId」做去重键
+      String keyOf(ScoreRecord r) =>
+          '${r.time?.millisecondsSinceEpoch}|${r.title}|${r.score}|${r.adId}';
+      final existing = _records.map(keyOf).toSet();
+      _records = [
+        ..._records,
+        ...page.items.where((r) => !existing.contains(keyOf(r))),
+      ];
+      _recordTotal = page.total;
+      _recordPage = nextPage;
+    } catch (e) {
+      _recordError('加载更多积分明细失败: $e');
+    } finally {
+      _isLoadingMoreRecords = false;
+      notifyListeners();
+    }
   }
 
   void _recordError(String message) {

@@ -801,8 +801,34 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               await walletProvider.fetchOrders();
             },
             child: ListView.builder(
-              itemCount: walletProvider.orders.length,
+              itemCount: walletProvider.orders.length +
+                  (walletProvider.hasMoreOrders ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index == walletProvider.orders.length) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: OutlinedButton.icon(
+                      onPressed: walletProvider.isLoadingMoreOrders
+                          ? null
+                          : walletProvider.loadMoreOrders,
+                      icon: walletProvider.isLoadingMoreOrders
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.expand_more_rounded, size: 18),
+                      label: Text(
+                        walletProvider.isLoadingMoreOrders
+                            ? '加载中…'
+                            : '加载更多（已显示 ${walletProvider.orders.length}/${walletProvider.ordersTotal}）',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(46),
+                      ),
+                    ),
+                  );
+                }
                 final order = walletProvider.orders[index];
                 return ListTile(
                   leading: CircleAvatar(

@@ -156,12 +156,37 @@ class _OrderScreenState extends State<OrderScreen> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
+          // 末尾追加「加载更多」
+          if (index == provider.orders.length) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              child: OutlinedButton.icon(
+                onPressed:
+                    provider.isLoadingMore ? null : provider.loadMoreOrders,
+                icon: provider.isLoadingMore
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.expand_more_rounded, size: 18),
+                label: Text(
+                  provider.isLoadingMore
+                      ? '加载中…'
+                      : '加载更多（已显示 ${provider.orders.length}/${provider.total}）',
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46),
+                ),
+              ),
+            );
+          }
           final order = provider.orders[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _OrderCard(order: order),
           );
-        }, childCount: provider.orders.length),
+        }, childCount: provider.orders.length + (provider.hasMore ? 1 : 0)),
       ),
     );
   }

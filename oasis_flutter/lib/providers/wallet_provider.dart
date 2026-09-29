@@ -13,6 +13,9 @@ class WalletProvider with ChangeNotifier {
   WalletEndpointInfo? _endpointInfo;
   List<Product> _products = [];
   List<OrderData> _orders = [];
+  int _ordersPage = 0;
+  int _ordersTotal = 0;
+  bool _isLoadingMoreOrders = false;
   bool _isLoading = false;
   String? _error;
   int _currentWalletIndex = 0; // 当前选中的钱包索引
@@ -20,6 +23,9 @@ class WalletProvider with ChangeNotifier {
 
   /// 自定义顺序的存储键
   static const String prefsKeyWalletOrder = 'wallet_order';
+
+  /// 交易记录每页条数
+  static const int ordersPageSize = 20;
 
   WalletProvider(this._apiService);
 
@@ -275,6 +281,37 @@ class WalletProvider with ChangeNotifier {
   }
 
   /// 获取订单列表
+  /// 是否还有更多交易记录
+  bool get hasMoreOrders => _orders.length < _ordersTotal;
+
+  bool get isLoadingMoreOrders => _isLoadingMoreOrders;
+
+  /// 服务端返回的交易记录总数
+  int get ordersTotal => _ordersTotal;
+
+  /// 加载下一页交易记录（追加）
+  Future<void> loadMoreOrders() async {
+    if (_isLoadingMoreOrders || !hasMoreOrders) return;
+    _isLoadingMoreOrders = true;
+    notifyListeners();
+    try {
+      final nextPage = _ordersPage + 1;
+      final response = await _apiService.getOrderList(
+        page: nextPage,
+        size: ordersPageSize,
+      );
+      final existing = _orders.map((o) => o.id).toSet();
+      _orders.addAll(response.orders.where((o) => !existing.contains(o.id)));
+      _ordersTotal = response.totalElements;
+      _ordersPage = nextPage;
+    } catch (e) {
+      debugPrint('加载更多交易记录失败: $e');
+    } finally {
+      _isLoadingMoreOrders = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchOrders({int page = 0, int size = 20}) async {
     try {
       _isLoading = true;
