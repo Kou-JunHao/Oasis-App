@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# 提交前敏感信息扫描（安装：git config core.hooksPath .githooks）
+exec "$(git rev-parse --show-toplevel)/scripts/check-secrets.sh" --staged

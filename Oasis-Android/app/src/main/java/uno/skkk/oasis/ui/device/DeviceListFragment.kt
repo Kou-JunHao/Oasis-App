@@ -518,7 +518,7 @@ class DeviceListFragment : LazyLoadFragment() {
     }
     
     private fun extractDeviceIdFromQR(qrContent: String): String? {
-        // 根据用户提供的信息，从类似 https://i.hnkzy.com/q/1/862551058539692 的链接中提取设备号
+        // 根据用户提供的信息，从类似 https://i.hnkzy.com/q/1/<设备号> 的链接中提取设备号
         val pattern = Pattern.compile(".*/(\\d{12,15})/?$")
         val matcher = pattern.matcher(qrContent)
         
