@@ -8,6 +8,7 @@ import '../models/score_models.dart';
 import '../providers/score_provider.dart';
 import '../providers/wallet_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/wallet_highlight.dart';
 
 /// 积分任务页面：每日签到、积分任务、任务执行记录
 class ScoreScreen extends StatefulWidget {
@@ -719,8 +720,18 @@ class _ScoreExchangeSheetState extends State<_ScoreExchangeSheet> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('确认兑换'),
-        content: Text(
-          '将 $score 积分兑换 ${_money(score)} 到「$walletName」？\n兑换后不可撤销。',
+        content: Text.rich(
+          TextSpan(
+            style: Theme.of(dialogContext).textTheme.bodyMedium,
+            children: [
+              TextSpan(text: '将 $score 积分兑换 ${_money(score)} 到'),
+              highlightedWalletSpan(
+                walletName,
+                baseStyle: Theme.of(dialogContext).textTheme.bodyMedium,
+              ),
+              const TextSpan(text: '？\n\n请核对钱包名称，兑换后不可撤销。'),
+            ],
+          ),
         ),
         actions: [
           TextButton(

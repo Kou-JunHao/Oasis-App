@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/wallet_provider.dart';
+import '../widgets/wallet_highlight.dart';
 import '../models/api_models.dart';
 
 /// 充值页面
@@ -534,6 +535,43 @@ class _RechargeScreenState extends State<RechargeScreen> {
       );
       return;
     }
+
+    // 充值前二次确认：钱包名加粗橙色，避免充错钱包
+    final walletName = wallet.ep?.name ?? wallet.name ?? '未命名钱包';
+    final amount = _selectedAmount ?? 0;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('确认充值'),
+        content: Text.rich(
+          TextSpan(
+            style: Theme.of(dialogContext).textTheme.bodyMedium,
+            children: [
+              const TextSpan(text: '确认为钱包 '),
+              highlightedWalletSpan(
+                walletName,
+                baseStyle: Theme.of(dialogContext).textTheme.bodyMedium,
+              ),
+              TextSpan(
+                text: ' 充值 ¥${amount.toStringAsFixed(2)}？\n\n'
+                    '请再次核对钱包名称与金额，充值后无法直接撤回。',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('确认充值'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
 
     // 显示加载对话框
     showDialog(

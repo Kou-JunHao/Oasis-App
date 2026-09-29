@@ -312,7 +312,17 @@ class WalletData {
   });
 
   // 获取实际显示的余额，优先使用olCash字段
-  double get displayBalance => olCash ?? (total > 0.0 ? total : balance);
+  /// 卡片/列表展示用的余额
+  ///
+  /// 服务端的 `total` = 线上/线下 × 现金/赠送 四项之和（积分兑换所得会进入
+  /// olGift/ofGift），因此优先使用 total；否则会只显示 olCash 而漏掉赠送余额。
+  /// total 缺失时退回四项相加，再退回旧的 balance 字段。
+  double get displayBalance {
+    if (total > 0.0) return total;
+    final sum = totalBalance;
+    if (sum > 0.0) return sum;
+    return balance;
+  }
   
   // 获取总余额（所有余额字段相加）
   double get totalBalance {
