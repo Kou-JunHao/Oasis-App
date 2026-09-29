@@ -9,18 +9,14 @@ import 'providers/device_provider.dart';
 import 'providers/wallet_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/score_provider.dart';
+import 'app_globals.dart';
 import 'services/api_service.dart';
 import 'services/client_version_service.dart';
+import 'services/update_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'widgets/disclaimer_dialog.dart';
 
-/// 全局 SnackBar 载体：会话失效时无论当前在哪个页面都能提示
-final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
-    GlobalKey<ScaffoldMessengerState>();
-
-/// 全局导航器：会话失效时需要把压在上面的二级页面全部弹出，回到登录页
-final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +62,20 @@ class _OasisAppState extends State<OasisApp> {
   void initState() {
     super.initState();
     _checkDisclaimerStatus();
+    _autoCheckUpdate();
+  }
+
+  /// 启动后按「自动检查更新」开关检查一次
+  ///
+  /// 更新面板挂在根导航器上，因此只要开关开启，任何页面都能收到更新提示，
+  /// 不再依赖用户是否停留在登录页。
+  void _autoCheckUpdate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 稍作延迟，避免与首屏数据加载抢占网络与界面
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      await UpdateService.autoCheckOnStartup();
+    });
   }
 
   /// 同步Token到ApiService（仅在Token变化时）

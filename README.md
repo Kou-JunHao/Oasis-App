@@ -136,6 +136,8 @@ cd Oasis-Android
 
 ---
 
-感谢原项目 [anti-ad-ilife-798](https://github.com/KynixInHK/anti-ad-ilife-798) 提供的灵感和技术支持。
+感谢原项目 [anti-ad-ilife-798](https://github.com/KynixInHK/anti-ad-ilife-798) 提供的灵感和技术支持；
+积分任务、每日签到与积分提交签名算法的实现参考了 [life-798 (WaterWidget)](https://github.com/nocookies111/life-798)（均为 MIT 许可证）。
+应用内可在「设置 → 关于应用 → 开源许可」查看完整的第三方库与参考项目清单。
 
 **注意**: 请确保在使用本项目前了解相关法律法规，并承担相应责任。本应用承诺不会远程传输您的个人数据，也不会将用户数据分享给任何第三方。均使用原应用的API。

@@ -7,6 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/auth_provider.dart';
 import '../theme/theme_provider.dart';
 import '../services/client_version_service.dart';
+import '../services/update_service.dart';
 import '../utils/github_update_checker.dart';
 import '../utils/github_mirror_config.dart';
 import '../utils/apk_installer.dart';
@@ -29,6 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   String _buildDate = 'Unknown';
   String _buildNumber = '';
   bool _isCheckingUpdate = false;
+  bool _autoCheckUpdate = true;
   bool _isDownloading = false;
   double _downloadProgress = 0.0;
   String? _downloadedApkPath;
@@ -44,6 +46,13 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
   void initState() {
     super.initState();
     _loadAppVersion();
+    _loadAutoCheckSetting();
+  }
+
+  /// 读取「自动检查更新」开关
+  Future<void> _loadAutoCheckSetting() async {
+    final enabled = await UpdateService.isAutoCheckEnabled();
+    if (mounted) setState(() => _autoCheckUpdate = enabled);
   }
 
   /// 加载应用版本信息
@@ -1195,18 +1204,19 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                     // TODO: 跳转到个人信息页面
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 外观设置
                 _SectionHeader(title: '外观设置'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Card(
                   child: Column(
                     children: [
                       SwitchListTile(
+                        visualDensity: VisualDensity.compact,
                         secondary: Icon(Icons.palette_rounded, color: colorScheme.primary),
                         title: const Text('莫奈取色'),
-                        subtitle: const Text('使用系统壁纸颜色作为主题色'),
+                        subtitle: const Text('跟随系统壁纸取色'),
                         value: themeProvider.useDynamicColor,
                         onChanged: (value) {
                           themeProvider.setDynamicColor(value);
@@ -1214,9 +1224,9 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                       ),
                       const Divider(height: 1, indent: 72),
                       ListTile(
+                        visualDensity: VisualDensity.compact,
                         leading: Icon(Icons.brush_rounded, color: colorScheme.primary),
                         title: const Text('自定义主题颜色'),
-                        subtitle: const Text('选择您喜欢的主题颜色'),
                         trailing: Container(
                           width: 32,
                           height: 32,
@@ -1244,15 +1254,16 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 高级设置
                 _SectionHeader(title: '高级设置'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Card(
                   child: ValueListenableBuilder<ClientVersionStatus>(
                     valueListenable: ClientVersionService.statusNotifier,
                     builder: (context, status, _) => ListTile(
+                      visualDensity: VisualDensity.compact,
                       leading: Icon(Icons.badge_rounded, color: colorScheme.primary),
                       title: const Text('伪装版本号'),
                       subtitle: Text('${status.version} · ${status.sourceLabel}'),
@@ -1261,34 +1272,49 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 关于应用
                 _SectionHeader(title: '关于应用'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Card(
                   child: Column(
                     children: [
                       ListTile(
+                        visualDensity: VisualDensity.compact,
                         leading: Icon(Icons.info_rounded, color: colorScheme.primary),
                         title: const Text('应用信息'),
-                        subtitle: Text('版本 $_appVersion • 构建于 $_buildDateShort'),
+                        subtitle: Text('$_appVersion · $_buildDateShort'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: _showAppInfoDialog,
                       ),
                       const Divider(height: 1, indent: 72),
                       ListTile(
+                        visualDensity: VisualDensity.compact,
                         leading: Icon(Icons.cloud_sync_rounded, color: colorScheme.primary),
                         title: const Text('GitHub镜像源'),
-                        subtitle: const Text('选择更新检查使用的镜像'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: _showMirrorSelectionDialog,
                       ),
                       const Divider(height: 1, indent: 72),
+                      SwitchListTile(
+                        visualDensity: VisualDensity.compact,
+                        secondary: Icon(Icons.update_rounded, color: colorScheme.primary),
+                        title: const Text('自动检查更新'),
+                        subtitle: const Text('启动时检查新版本'),
+                        value: _autoCheckUpdate,
+                        onChanged: (value) async {
+                          setState(() => _autoCheckUpdate = value);
+                          await UpdateService.setAutoCheckEnabled(value);
+                          if (!mounted) return;
+                          _showSuccessSnackBar(value ? '已开启自动检查更新' : '已关闭自动检查更新');
+                        },
+                      ),
+                      const Divider(height: 1, indent: 72),
                       ListTile(
+                        visualDensity: VisualDensity.compact,
                         leading: Icon(Icons.system_update_rounded, color: colorScheme.primary),
                         title: const Text('检查更新'),
-                        subtitle: const Text('查找新版本'),
                         trailing: _isCheckingUpdate
                             ? const SizedBox(
                                 width: 20,
@@ -1300,9 +1326,9 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                       ),
                       const Divider(height: 1, indent: 72),
                       ListTile(
+                        visualDensity: VisualDensity.compact,
                         leading: Icon(Icons.gavel_rounded, color: colorScheme.primary),
                         title: const Text('开源许可'),
-                        subtitle: const Text('查看第三方开源许可证'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () {
                           Navigator.push(
@@ -1316,22 +1342,22 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 支持作者
                 _SectionHeader(title: '支持作者'),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Card(
                   color: colorScheme.secondaryContainer,
                   child: InkWell(
                     onTap: () => _showPaymentSheet(context),
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(14),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: colorScheme.primaryContainer,
                               borderRadius: BorderRadius.circular(12),
@@ -1339,10 +1365,10 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                             child: Icon(
                               Icons.favorite_rounded,
                               color: colorScheme.onPrimaryContainer,
-                              size: 28,
+                              size: 22,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1373,7 +1399,7 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
                 // 退出登录按钮
                 FilledButton.icon(
@@ -1381,12 +1407,11 @@ class _SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAlive
                   icon: const Icon(Icons.logout_rounded),
                   label: const Text('退出登录'),
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: colorScheme.errorContainer,
                     foregroundColor: colorScheme.onErrorContainer,
                   ),
                 ),
-                const SizedBox(height: 16),
               ]),
             ),
           ),
@@ -1475,7 +1500,6 @@ class _ThemeModeTile extends StatelessWidget {
         final tile = ListTile(
           leading: Icon(Icons.color_lens_rounded, color: colorScheme.primary),
           title: const Text('主题模式'),
-          subtitle: const Text('选择浅色、深色或跟随系统'),
           trailing: inline ? button : null,
         );
 
@@ -1534,13 +1558,13 @@ class _UserInfoCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Hero(
                 tag: 'user_avatar',
                 child: CircleAvatar(
-                  radius: 36,
+                  radius: 28,
                   backgroundColor: colorScheme.primaryContainer,
                   backgroundImage: user?.avatar != null && user!.avatar!.isNotEmpty
                       ? NetworkImage(user!.avatar!)
@@ -1548,13 +1572,13 @@ class _UserInfoCard extends StatelessWidget {
                   child: user?.avatar == null || user!.avatar!.isEmpty
                       ? Icon(
                           Icons.person_rounded,
-                          size: 40,
+                          size: 32,
                           color: colorScheme.onPrimaryContainer,
                         )
                       : null,
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

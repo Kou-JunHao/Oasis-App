@@ -25,6 +25,7 @@ class _WalletScreenState extends State<WalletScreen> {
     _pageController = PageController();
     // 加载钱包余额
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WalletProvider>().loadWalletOrder();
       context.read<WalletProvider>().fetchWalletBalance();
       // 钱包卡片上要显示积分，顺带取一次
       context.read<ScoreProvider>().ensureLoaded();
@@ -87,6 +88,11 @@ class _WalletScreenState extends State<WalletScreen> {
                 floating: false,
                 pinned: true,
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.reorder_rounded),
+                    onPressed: () => _showWalletOrderSheet(context),
+                    tooltip: '钱包排序',
+                  ),
                   IconButton(
                     icon: const Icon(Icons.history_rounded),
                     onPressed: () {
@@ -332,7 +338,6 @@ class _WalletScreenState extends State<WalletScreen> {
         itemCount: allWallets.length,
         itemBuilder: (context, index) {
           final wallet = allWallets[index];
-          final isCurrentPage = provider.currentWalletIndex == index;
           
           return Card(
               elevation: 0,
@@ -358,6 +363,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 顶部：钱包图标 + 页码指示
                     Row(
                       children: [
                         Container(
@@ -373,10 +379,12 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                         ),
                         const Spacer(),
-                        // 滑动提示（横向箭头）
                         if (allWallets.length > 1)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: colorScheme.surface.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(20),
@@ -407,58 +415,83 @@ class _WalletScreenState extends State<WalletScreen> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    // 钱包名称
-                    if (wallet.ep?.name != null || wallet.name != null) ...[
-                      Text(
-                        wallet.ep?.name ?? wallet.name!,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w500,
-                        ),
+                    const SizedBox(height: 14),
+                    // 钱包名称（单行，避免长名称撑破卡片）
+                    Text(
+                      wallet.ep?.name ?? wallet.name ?? '未命名钱包',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(height: 4),
-                    ],
-                    // 钱包余额
+                    ),
+                    const SizedBox(height: 6),
+                    // 余额与积分胶囊同一行：余额占主位，积分贴右下
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          '¥',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '¥',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onPrimaryContainer,
+                                    ),
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    wallet.displayBalance.toStringAsFixed(2),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onPrimaryContainer,
+                                          letterSpacing: -1,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          wallet.displayBalance.toStringAsFixed(2),
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
-                            letterSpacing: -1,
-                          ),
+                        const SizedBox(width: 8),
+                        _buildScorePill(
+                          context,
+                          context.watch<ScoreProvider>(),
+                          colorScheme,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    // 积分与折算金额
-                    _buildScorePill(
-                      context,
-                      context.watch<ScoreProvider>(),
-                      colorScheme,
-                    ),
-                    // 总余额提示
-                    if (allWallets.length > 1) ...[
-                      const SizedBox(height: 8),
+                    const Spacer(),
+                    // 底部：多钱包时显示总余额
+                    if (allWallets.length > 1)
                       Text(
-                        '总余额: ¥${totalBalance.toStringAsFixed(2)}',
+                        '总余额 ¥${totalBalance.toStringAsFixed(2)} · '
+                        '点卡片查看余额构成',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                        ),
+                      )
+                    else
+                      Text(
+                        '点卡片查看余额构成',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
                         ),
                       ),
-                    ],
                   ],
                 ),
                 ),
@@ -466,6 +499,122 @@ class _WalletScreenState extends State<WalletScreen> {
             );
         },
       ),
+    );
+  }
+
+  /// 钱包排序：拖拽调整卡片顺序并保存到本地
+  Future<void> _showWalletOrderSheet(BuildContext context) async {
+    final provider = context.read<WalletProvider>();
+    final wallets = provider.allWallets;
+    if (wallets.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('当前只有一个钱包，无需排序'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final ids = wallets.map((w) => w.id ?? '').toList();
+    final names = {
+      for (final w in wallets)
+        (w.id ?? ''): (w.ep?.name ?? w.name ?? '未命名钱包'),
+    };
+
+    final result = await showModalBottomSheet<List<String>>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SizedBox(
+          height: MediaQuery.sizeOf(sheetContext).height * 0.6,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '钱包排序',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Text(
+                      '拖动调整顺序',
+                      style: Theme.of(sheetContext).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ReorderableListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: ids.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    setSheetState(() {
+                      final moved = ids.removeAt(oldIndex);
+                      ids.insert(newIndex, moved);
+                    });
+                  },
+                  itemBuilder: (context, i) => ListTile(
+                    key: ValueKey('wallet-order-${ids[i]}-$i'),
+                    leading: const Icon(Icons.drag_indicator_rounded),
+                    title: Text(
+                      names[ids[i]] ?? '未命名钱包',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: i == 0 ? const Text('默认展示') : null,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetContext, const <String>[]),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('恢复默认'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(sheetContext, ids),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('保存顺序'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final message = result.isEmpty ? '已恢复默认排序（按余额）' : '钱包顺序已保存';
+    if (result.isEmpty) {
+      await provider.resetWalletOrder();
+    } else {
+      await provider.saveWalletOrder(result);
+    }
+    messenger.showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 

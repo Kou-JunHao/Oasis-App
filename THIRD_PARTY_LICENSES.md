@@ -67,6 +67,48 @@
 ### 测试库
 - **junit:junit** (4.13.2) - Eclipse Public License 1.0
 
+## Flutter 依赖库（oasis_flutter）
+
+| 库 | 许可证 | 用途 |
+|---|---|---|
+| Flutter / Dart | BSD 3-Clause | 应用框架与运行时 |
+| provider | MIT | 状态管理 |
+| go_router | BSD 3-Clause | 路由导航 |
+| dio | MIT | HTTP 客户端 |
+| http | BSD 3-Clause | 更新检查与镜像源请求 |
+| crypto | BSD 3-Clause | 积分提交签名（MD5） |
+| shared_preferences | BSD 3-Clause | 本地存储 |
+| sqflite | BSD 2-Clause | 本地数据库 |
+| path_provider | BSD 3-Clause | 路径获取 |
+| dynamic_color | Apache License 2.0 | 莫奈取色 |
+| google_fonts | Apache License 2.0 | 字体 |
+| image_picker / camera | BSD 3-Clause | 图片选择与相机 |
+| mobile_scanner | BSD 3-Clause | 二维码扫描 |
+| permission_handler | MIT | 权限管理 |
+| package_info_plus / device_info_plus | BSD 3-Clause | 包信息与设备信息 |
+| url_launcher | BSD 3-Clause | 打开外部链接 |
+| flutter_markdown | BSD 3-Clause | Markdown 渲染（更新说明） |
+| animations | BSD 3-Clause | 过渡动画 |
+| intl | BSD 3-Clause | 日期与本地化格式化 |
+| cupertino_icons | MIT | 图标 |
+| tobias | Apache License 2.0 | 支付宝支付 SDK 封装 |
+
+> 完整清单与许可证链接可在应用内「设置 → 关于应用 → 开源许可」查看。
+
+## 参考项目
+
+以下项目采用 MIT 许可证，本项目的部分实现参考或移植自它们：
+
+### life-798 (WaterWidget)
+- 仓库：https://github.com/nocookies111/life-798
+- 许可证：MIT License，Copyright (c) 2026 nocookies111
+- 参考内容：积分任务、每日签到、积分提交签名算法与任务限速规则
+
+### anti-ad-ilife-798
+- 仓库：https://github.com/KynixInHK/anti-ad-ilife-798
+- 许可证：MIT License
+- 参考内容：项目最初的设计思路与接口实现
+
 ## 许可证详情
 
 ### Apache License 2.0
@@ -74,8 +116,12 @@
 https://www.apache.org/licenses/LICENSE-2.0
 
 ### BSD License
-Glide 库使用 BSD License，详细内容请参见：
-https://opensource.org/licenses/BSD-3-Clause
+BSD 2-Clause：https://opensource.org/licenses/BSD-2-Clause
+BSD 3-Clause：https://opensource.org/licenses/BSD-3-Clause
+
+### MIT License
+Flutter 侧的 provider、permission_handler、cupertino_icons 以及参考项目（life-798、anti-ad-ilife-798）使用 MIT License，详细内容请参见：
+https://opensource.org/licenses/MIT
 
 ### Eclipse Public License 1.0
 JUnit 使用 Eclipse Public License 1.0，详细内容请参见：
@@ -87,4 +133,4 @@ https://www.eclipse.org/legal/epl-v10.html
 
 ---
 
-最后更新时间：2025年9月28日
+最后更新时间：2026年9月29日

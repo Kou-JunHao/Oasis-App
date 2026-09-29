@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tobias/tobias.dart';
 import '../models/api_models.dart';
 import '../services/api_service.dart';
@@ -15,6 +16,10 @@ class WalletProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   int _currentWalletIndex = 0; // 当前选中的钱包索引
+  List<String> _walletOrder = []; // 用户自定义的钱包顺序（存钱包 id）
+
+  /// 自定义顺序的存储键
+  static const String prefsKeyWalletOrder = 'wallet_order';
 
   WalletProvider(this._apiService);
 
@@ -27,7 +32,10 @@ class WalletProvider with ChangeNotifier {
   String? get error => _error;
   int get currentWalletIndex => _currentWalletIndex;
 
-  // 获取所有可用钱包（按余额排序：有余额的优先，余额从大到小）
+  // 获取所有可用钱包
+  //
+  // 默认按「有余额优先、余额从大到小」排序；
+  // 用户在钱包页自定义过顺序后，优先采用自定义顺序（未列入的钱包排在末尾）。
   List<WalletData> get allWallets {
     if (_walletResponseData == null) return [];
     final wallets = List<WalletData>.from(_walletResponseData!.allWallets);
@@ -38,7 +46,80 @@ class WalletProvider with ChangeNotifier {
       // 再按余额从大到小排序
       return b.displayBalance.compareTo(a.displayBalance);
     });
-    return wallets;
+    return applyWalletOrder(wallets, _walletOrder);
+  }
+
+  /// 是否已自定义过钱包顺序
+  bool get hasCustomWalletOrder => _walletOrder.isNotEmpty;
+
+  /// 当前自定义顺序（钱包 id 列表）
+  List<String> get walletOrder => List.unmodifiable(_walletOrder);
+
+  /// 按自定义顺序重排钱包（纯函数，便于测试）
+  ///
+  /// [order] 为空时原样返回；不在 [order] 中的钱包保持原有相对顺序排在末尾。
+  @visibleForTesting
+  static List<WalletData> applyWalletOrder(
+    List<WalletData> wallets,
+    List<String> order,
+  ) {
+    if (order.isEmpty || wallets.isEmpty) return wallets;
+    final rank = <String, int>{};
+    for (var i = 0; i < order.length; i++) {
+      rank[order[i]] = i;
+    }
+    final ordered = <WalletData>[];
+    final rest = <WalletData>[];
+    for (final wallet in wallets) {
+      final id = wallet.id ?? '';
+      if (id.isNotEmpty && rank.containsKey(id)) {
+        ordered.add(wallet);
+      } else {
+        rest.add(wallet);
+      }
+    }
+    ordered.sort((a, b) => rank[a.id]!.compareTo(rank[b.id]!));
+    return [...ordered, ...rest];
+  }
+
+  /// 读取自定义顺序
+  Future<void> loadWalletOrder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getStringList(prefsKeyWalletOrder);
+      if (saved != null) {
+        _walletOrder = saved;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('读取钱包顺序失败: $e');
+    }
+  }
+
+  /// 保存自定义顺序
+  Future<void> saveWalletOrder(List<String> ids) async {
+    _walletOrder = List<String>.from(ids);
+    _currentWalletIndex = 0;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(prefsKeyWalletOrder, _walletOrder);
+    } catch (e) {
+      debugPrint('保存钱包顺序失败: $e');
+    }
+  }
+
+  /// 恢复默认（按余额）排序
+  Future<void> resetWalletOrder() async {
+    _walletOrder = [];
+    _currentWalletIndex = 0;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(prefsKeyWalletOrder);
+    } catch (e) {
+      debugPrint('清除钱包顺序失败: $e');
+    }
   }
 
   // 当前选中的钱包
