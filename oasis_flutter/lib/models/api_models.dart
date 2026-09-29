@@ -31,7 +31,9 @@ class ApiResponse<T> {
 
 /// Master响应数据（包含用户信息和设备列表）
 class MasterResponseData {
-  final UserAccount account;
+  /// 账号信息。服务端在未携带有效 token 时只返回广告位数据（`{"ads":[]}`），
+  /// 此时 account 为 null —— 调用方应据此判定登录态已失效。
+  final UserAccount? account;
   final List<DeviceDetail> devices;
   final String? pltTotalScore;
 
@@ -41,12 +43,22 @@ class MasterResponseData {
     this.pltTotalScore,
   });
 
+  /// 是否携带账号信息（即本次请求确实通过了鉴权）
+  bool get authenticated => account != null;
+
   factory MasterResponseData.fromJson(Map<String, dynamic> json) {
+    final accountJson = json['account'];
+    final favosJson = json['favos'];
     return MasterResponseData(
-      account: UserAccount.fromJson(json['account'] as Map<String, dynamic>),
-      devices: (json['favos'] as List<dynamic>)
-          .map((e) => DeviceDetail.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      account: accountJson is Map<String, dynamic>
+          ? UserAccount.fromJson(accountJson)
+          : null,
+      devices: favosJson is List
+          ? favosJson
+              .whereType<Map<String, dynamic>>()
+              .map(DeviceDetail.fromJson)
+              .toList()
+          : const <DeviceDetail>[],
       pltTotalScore: json['pltTotalScore'] as String?,
     );
   }
@@ -104,20 +116,25 @@ class DeviceDetail {
   String get runningText => isRunning ? '运行中' : '已停止';
 
   factory DeviceDetail.fromJson(Map<String, dynamic> json) {
+    // 服务端个别条目可能缺失子对象（owner/gene/addr/ep），强转会直接抛类型错误
+    Map<String, dynamic>? sub(dynamic value) =>
+        value is Map<String, dynamic> ? value : null;
+
+    final ownerJson = sub(json['owner']);
+    final geneJson = sub(json['gene']);
+    final addrJson = sub(json['addr']);
+    final epJson = sub(json['ep']);
+
     return DeviceDetail(
-      id: json['id'].toString(),  // 处理int和String类型
+      id: (json['id'] ?? '').toString(), // 处理int和String类型
       name: json['name'] as String?,
       status: json['status'] as int? ?? 0, // 默认为离线
-      owner: DeviceOwner.fromJson(json['owner'] as Map<String, dynamic>),
-      gene: json['gene'] != null
-          ? DeviceGene.fromJson(json['gene'] as Map<String, dynamic>)
-          : null,
-      address: json['addr'] != null
-          ? DeviceAddress.fromJson(json['addr'] as Map<String, dynamic>)
-          : null,
-      endpoint: json['ep'] != null
-          ? DeviceEndpoint.fromJson(json['ep'] as Map<String, dynamic>)
-          : null,
+      owner: ownerJson != null
+          ? DeviceOwner.fromJson(ownerJson)
+          : DeviceOwner(id: ''),
+      gene: geneJson != null ? DeviceGene.fromJson(geneJson) : null,
+      address: addrJson != null ? DeviceAddress.fromJson(addrJson) : null,
+      endpoint: epJson != null ? DeviceEndpoint.fromJson(epJson) : null,
     );
   }
 }

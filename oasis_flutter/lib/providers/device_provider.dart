@@ -456,9 +456,20 @@ class DeviceProvider with ChangeNotifier {
       final response = await _apiService.getMasterData();
 
       if (response.isSuccess && response.data != null) {
-        _devices = response.data!.devices;
-        _markDeviceOrderDirty();
-        _error = null;
+        final master = response.data!;
+        if (!master.authenticated) {
+          // 服务端只回了广告位数据，说明登录态已失效
+          // （ApiService 已触发会话失效回调，界面会退回登录页）
+          _devices = [];
+          _markDeviceOrderDirty();
+          if (!silent) {
+            _error = '登录状态已过期，请重新登录';
+          }
+        } else {
+          _devices = master.devices;
+          _markDeviceOrderDirty();
+          _error = null;
+        }
       } else if (!silent) {
         _error = response.message ?? '获取设备列表失败';
       }

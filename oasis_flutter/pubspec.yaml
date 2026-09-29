@@ -86,6 +86,9 @@ dependencies:
   # Animations
   animations: ^2.0.11
 
+  # MD5 (积分任务签名)
+  crypto: ^3.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

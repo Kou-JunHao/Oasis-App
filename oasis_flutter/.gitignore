@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 积分签名盐值（本地配置，不入库）
+lib/config/score_secrets.dart

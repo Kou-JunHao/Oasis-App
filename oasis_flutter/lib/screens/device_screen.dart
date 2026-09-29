@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/device_provider.dart';
+import 'device_detail_screen.dart';
 import '../models/api_models.dart';
 import '../widgets/bottom_sheet_helper.dart';
 import '../widgets/qr_scanner_screen.dart';
@@ -838,7 +839,12 @@ class _DeviceScreenState extends State<DeviceScreen>
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          // TODO: 跳转到设备详情页
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DeviceDetailScreen(device: device),
+            ),
+          );
         },
         onLongPress: () => _showSimpleDeviceActionMenu(context, device),
         child: Padding(

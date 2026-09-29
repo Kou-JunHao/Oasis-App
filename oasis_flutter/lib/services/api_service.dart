@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../models/api_models.dart';
 import '../models/auth_models.dart';
+import '../models/device_detail_models.dart';
 import 'client_version_service.dart';
 
 /// API 服务类
@@ -76,10 +77,18 @@ class ApiService {
     return InterceptorsWrapper(
       onRequest: (options, handler) async {
         // 伪装版本号：动态获取（用户自定义 > 线上最新 > 缓存 > 基线），
-        // 带超时等待，超时则先用当前已知值，不阻塞请求
-        final clientVersion = await ClientVersionService.resolveBounded();
-        options.headers['versioncode'] = clientVersion;
-        options.headers['User-Agent'] = 'Android_ilife798_$clientVersion';
+        // 带超时等待，超时则先用当前已知值，不阻塞请求。
+        // 个别接口需要固定版本号（如积分主平台要求 2.0.178），
+        // 可通过 options.extra['skipVersionHeaders'] = true 跳过自动注入。
+        final skipVersionHeaders = options.extra['skipVersionHeaders'] == true;
+        final String clientVersion;
+        if (skipVersionHeaders) {
+          clientVersion = '${options.headers['versioncode'] ?? ''}';
+        } else {
+          clientVersion = await ClientVersionService.resolveBounded();
+          options.headers['versioncode'] = clientVersion;
+          options.headers['User-Agent'] = 'Android_ilife798_$clientVersion';
+        }
 
         // 添加 token
         if (_token != null && _token!.isNotEmpty) {
@@ -138,6 +147,9 @@ class ApiService {
       },
     );
   }
+
+  /// 当前 Token（积分奖励签名等场景需要）
+  String? get token => _token;
 
   /// 设置 Token
   void setToken(String token) {
@@ -210,8 +222,21 @@ class ApiService {
   /// 获取完整的Master响应（包含用户信息和设备列表）
   Future<ApiResponse<MasterResponseData>> getMasterData() async {
     final response = await _dio.get('api/v1/ui/app/master');
+    final body = response.data;
+
+    // 该接口在 token 失效时不会返回 -99，而是返回 code=0 + 匿名数据（仅含广告位，
+    // 没有 account/favos）。这里显式识别，否则会被当成成功响应，
+    // 表现为设备页解析出 null 账号后抛类型转换错误且不会退回登录页。
+    if (body is Map && body['code'] == 0) {
+      final data = body['data'];
+      final authenticated = data is Map && data['account'] != null;
+      if (!authenticated) {
+        _notifySessionExpired('master 返回匿名数据');
+      }
+    }
+
     return ApiResponse.fromJson(
-      response.data,
+      body,
       (json) => MasterResponseData.fromJson(json as Map<String, dynamic>),
     );
   }
@@ -402,6 +427,32 @@ class ApiService {
       queryParameters: {'id': orderId},
     );
     return ApiResponse.fromJson(response.data, (json) => json as String);
+  }
+
+  // ==================== 设备详情相关 API ====================
+
+  /// 设备实时状态（运行状态、累计出水量、流速、分路等）
+  Future<ApiResponse<DeviceRuntimeStatus>> getDeviceStatus(String deviceId) async {
+    final response = await _dio.get(
+      'api/v1/ui/app/dev/status',
+      queryParameters: {'did': deviceId},
+    );
+    return ApiResponse.fromJson(
+      response.data,
+      (json) => DeviceRuntimeStatus.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// 钱包明细（余额构成、归属账号与结算端点）
+  Future<ApiResponse<WalletDetail>> getWalletDetail(String walletId) async {
+    final response = await _dio.get(
+      'api/v1/acc/wallet/detail',
+      queryParameters: {'id': walletId},
+    );
+    return ApiResponse.fromJson(
+      response.data,
+      (json) => WalletDetail.fromJson(json as Map<String, dynamic>),
+    );
   }
 
   // ==================== 通用方法 ====================

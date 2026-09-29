@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/device_provider.dart';
 import 'providers/wallet_provider.dart';
 import 'providers/order_provider.dart';
+import 'providers/score_provider.dart';
 import 'services/api_service.dart';
 import 'services/client_version_service.dart';
 import 'screens/home_screen.dart';
@@ -17,6 +18,9 @@ import 'widgets/disclaimer_dialog.dart';
 /// 全局 SnackBar 载体：会话失效时无论当前在哪个页面都能提示
 final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
+
+/// 全局导航器：会话失效时需要把压在上面的二级页面全部弹出，回到登录页
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,11 +35,14 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        // 页面可直接读取 ApiService（如设备详情页查询实时状态）
+        Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => DeviceProvider(apiService)),
         ChangeNotifierProvider(create: (_) => OrderProvider(apiService)),
         ChangeNotifierProvider(create: (_) => WalletProvider(apiService)),
+        ChangeNotifierProvider(create: (_) => ScoreProvider(apiService)),
       ],
       child: OasisApp(apiService: apiService),
     ),
@@ -135,10 +142,13 @@ class _OasisAppState extends State<OasisApp> {
         // 同步token到ApiService（仅在Token变化时）
         _syncTokenIfNeeded(authProvider.token);
 
-        // 服务端会话失效：已自动登出并回到登录页，这里给出提示
+        // 服务端会话失效：已自动登出，这里弹出所有二级页面并提示
         if (authProvider.sessionExpired) {
           authProvider.acknowledgeSessionExpired();
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            // 处在二级页面（如积分任务、订单详情）时，home 切换不足以回到登录页，
+            // 需要把压栈的路由全部弹出
+            appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
             appScaffoldMessengerKey.currentState?.showSnackBar(
               const SnackBar(content: Text('登录状态已过期，请重新登录')),
             );
@@ -165,6 +175,7 @@ class _OasisAppState extends State<OasisApp> {
               title: 'Oasis',
               debugShowCheckedModeBanner: false,
               scaffoldMessengerKey: appScaffoldMessengerKey,
+              navigatorKey: appNavigatorKey,
               theme: themeProvider.getLightTheme(),
               darkTheme: themeProvider.getDarkTheme(),
               themeMode: themeProvider.themeMode,

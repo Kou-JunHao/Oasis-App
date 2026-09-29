@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/api_models.dart';
+import '../services/api_service.dart';
+import '../models/device_detail_models.dart';
+import '../providers/score_provider.dart';
 import '../providers/wallet_provider.dart';
 import 'recharge_screen.dart';
+import 'score_screen.dart';
 
 /// 钱包页面
 class WalletScreen extends StatefulWidget {
@@ -21,6 +26,8 @@ class _WalletScreenState extends State<WalletScreen> {
     // 加载钱包余额
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WalletProvider>().fetchWalletBalance();
+      // 钱包卡片上要显示积分，顺带取一次
+      context.read<ScoreProvider>().ensureLoaded();
     });
   }
 
@@ -33,7 +40,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       body: Consumer<WalletProvider>(
         builder: (context, walletProvider, child) {
@@ -105,6 +112,9 @@ class _WalletScreenState extends State<WalletScreen> {
                     const SizedBox(height: 24),
                     // 充值按钮
                     _buildRechargeButton(context),
+                    const SizedBox(height: 24),
+                    // 积分任务入口
+                    _buildScoreEntry(context),
                   ]),
                 ),
               ),
@@ -115,8 +125,184 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildBalanceCard(BuildContext context, WalletProvider provider) {
-    final totalBalance = provider.totalBalance;  // 使用总余额
+  /// 余额构成明细（线下/线上 × 现金/赠送），并补充账号与结算端点信息
+  Future<void> _showBalanceDetail(BuildContext context, WalletData wallet) async {
+    final api = context.read<ApiService>();
+    WalletDetail? remote;
+    if (wallet.id != null && wallet.id!.isNotEmpty) {
+      try {
+        final response = await api.getWalletDetail(wallet.id!);
+        if (response.isSuccess) remote = response.data;
+      } catch (_) {
+        // 明细补充失败不影响本地余额展示
+      }
+    }
+
+    if (!context.mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final endpointName =
+            remote?.endpointName ?? wallet.ep?.name ?? wallet.name ?? '钱包';
+        final owner = remote?.ownerName ??
+            wallet.owner?.id ??
+            '';
+
+        Widget row(String label, double value) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Text(label, style: theme.textTheme.bodyMedium),
+                  const Spacer(),
+                  Text(
+                    '¥${value.toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '余额明细',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  endpointName,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (remote != null && remote.ownerPhone.isNotEmpty)
+                  Text(
+                    '账号 $owner · ${remote.ownerPhone}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                const Divider(height: 24),
+                row('线上现金', wallet.olCash ?? 0),
+                row('线上赠送', wallet.olGift ?? 0),
+                row('线下现金', wallet.ofCash ?? 0),
+                row('线下赠送', wallet.ofGift ?? 0),
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Text(
+                      '合计',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '¥${wallet.totalBalance.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_formatUtime(wallet.utime) != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '更新时间 ${_formatUtime(wallet.utime)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 后端 utime 可能是毫秒时间戳字符串
+  String? _formatUtime(String? raw) {
+    final ms = int.tryParse(raw ?? '');
+    if (ms == null || ms <= 0) return null;
+    final t = DateTime.fromMillisecondsSinceEpoch(ms);
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${t.year}-${two(t.month)}-${two(t.day)} ${two(t.hour)}:${two(t.minute)}';
+  }
+
+  /// 卡片上的积分胶囊：显示积分数量与折算金额
+  Widget _buildScorePill(
+    BuildContext context,
+    ScoreProvider provider,
+    ColorScheme colorScheme,
+  ) {
+    final overview = provider.overview;
+    final text = overview.validScore > 0
+        ? '积分 ${overview.validScore} · ${overview.moneyText}'
+        : '积分 --';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.workspace_premium_rounded,
+            size: 14,
+            color: colorScheme.onPrimaryContainer,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 积分任务入口
+  Widget _buildScoreEntry(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.workspace_premium_rounded, color: colorScheme.primary),
+        title: const Text('积分任务'),
+        subtitle: const Text('每日签到、做任务赚积分'),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ScoreScreen()),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard(BuildContext context, WalletProvider provider) {    final totalBalance = provider.totalBalance;  // 使用总余额
     final allWallets = provider.allWallets;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -137,7 +323,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
     // 使用PageView支持左右滑动
     return SizedBox(
-      height: 220,
+      height: 250,
       child: PageView.builder(
         controller: _pageController,
         onPageChanged: (index) {
@@ -153,7 +339,10 @@ class _WalletScreenState extends State<WalletScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Container(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => _showBalanceDetail(context, wallet),
+                child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
@@ -253,6 +442,13 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    // 积分与折算金额
+                    _buildScorePill(
+                      context,
+                      context.watch<ScoreProvider>(),
+                      colorScheme,
+                    ),
                     // 总余额提示
                     if (allWallets.length > 1) ...[
                       const SizedBox(height: 8),
@@ -264,6 +460,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                     ],
                   ],
+                ),
                 ),
               ),
             );
