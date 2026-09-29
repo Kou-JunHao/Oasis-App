@@ -137,6 +137,47 @@ class ScoreProvider extends ChangeNotifier {
         action: () => _service.submitTask(mission: mission, uid: _uid),
       );
 
+  /// 积分兑换：把积分兑换到指定钱包（结算端点）
+  ///
+  /// 成功后自动刷新积分与任务状态；「待确认」结果不会自动重试，
+  /// 由界面提示用户去官方记录核对。
+  Future<ScoreExchangeResult> exchange({
+    required String endpointId,
+    required int score,
+    String walletName = '',
+  }) async {
+    if (_submitting) {
+      return const ScoreExchangeResult(
+        success: false,
+        message: '正在处理上一个操作，请稍候',
+      );
+    }
+    _submitting = true;
+    notifyListeners();
+
+    ScoreExchangeResult result;
+    try {
+      result = await _service.exchange(endpointId: endpointId, score: score);
+    } catch (e) {
+      result = ScoreExchangeResult(success: false, message: _describeError(e));
+    }
+
+    _submitting = false;
+    _logs.insert(
+      0,
+      ScoreLogEntry(
+        time: DateTime.now(),
+        title: '积分兑换${walletName.isEmpty ? '' : ' → $walletName'}',
+        success: result.success,
+      ),
+    );
+    if (_logs.length > 100) _logs.removeLast();
+    notifyListeners();
+
+    if (result.success) await refresh();
+    return result;
+  }
+
   Future<ScoreSubmitResult> _submit({
     required String title,
     required Future<ScoreSubmitResult> Function() action,

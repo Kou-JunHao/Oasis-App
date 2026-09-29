@@ -234,10 +234,24 @@ class WalletResponseData {
   }
   
   // 获取所有可用的钱包数据
+  //
+  // aw（当前钱包）本身就是 eps 中的一项，直接拼接会出现重复卡片，
+  // 因此按钱包 id 去重，保留先出现的 aw（它带有当前余额字段）。
   List<WalletData> get allWallets {
     final result = <WalletData>[];
-    if (wallet != null) result.add(wallet!);
-    if (wallets != null) result.addAll(wallets!);
+    final seen = <String>{};
+    void add(WalletData item) {
+      final id = item.id ?? '';
+      if (id.isNotEmpty && !seen.add(id)) return;
+      result.add(item);
+    }
+
+    if (wallet != null) add(wallet!);
+    if (wallets != null) {
+      for (final item in wallets!) {
+        add(item);
+      }
+    }
     return result;
   }
 

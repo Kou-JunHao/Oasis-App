@@ -183,6 +183,112 @@ class ScoreService {
         fallbackGain: mission.score,
       );
 
+
+  // ==================== 积分兑换 ====================
+
+  /// 把积分兑换到指定结算端点（钱包）
+  ///
+  /// 流程（与 life-798 一致，防重复兑换）：
+  ///   1. `POST /acc/score/score-use`，body `{ep:{id}, score, type:1}`
+  ///   2. 响应 `data.sn` 是账单号；**拿不到账单号一律按「待确认」处理**，不自动重试
+  ///   3. `GET /bill/view-full?id=<账单号>`，校验 `bill.id` 匹配且 `bill.status == 3`
+  Future<ScoreExchangeResult> exchange({
+    required String endpointId,
+    required int score,
+  }) async {
+    if (endpointId.trim().isEmpty) {
+      return const ScoreExchangeResult(success: false, message: '请选择兑换到的钱包');
+    }
+    if (!isValidExchangeScore(score)) {
+      return const ScoreExchangeResult(
+        success: false,
+        message: '兑换积分必须是 100 的正整数倍',
+      );
+    }
+
+    final Response response;
+    try {
+      response = await _api.post(
+        'api/v1/acc/score/score-use',
+        data: {
+          'ep': {'id': endpointId},
+          'score': score,
+          'type': 1,
+        },
+      );
+    } catch (e) {
+      return ScoreExchangeResult(
+        success: false,
+        pending: true,
+        message: '兑换请求未完成（$e），请先核对官方记录，勿重复兑换',
+      );
+    }
+    _syncClock(response);
+
+    final body = response.data;
+    if (body is! Map) {
+      return const ScoreExchangeResult(
+        success: false,
+        pending: true,
+        message: '服务端返回格式异常，请核对官方记录后再操作',
+      );
+    }
+    final code = body['code'];
+    if (code != 0) {
+      final message = (body['msg'] ?? '').toString().trim();
+      return ScoreExchangeResult(
+        success: false,
+        message: message.isEmpty ? '兑换失败（code=$code）' : message,
+      );
+    }
+
+    final billId = exchangeBillIdOf(body);
+    if (billId == null) {
+      return const ScoreExchangeResult(
+        success: false,
+        pending: true,
+        message: '兑换结果待确认，请先核对官方记录，勿重复兑换',
+      );
+    }
+
+    try {
+      final billResponse = await _api.get(
+        'api/v1/bill/view-full',
+        queryParameters: {'id': billId},
+      );
+      _syncClock(billResponse);
+      final completed = exchangeCompletedOf(billResponse.data, billId);
+      if (completed == true) {
+        return ScoreExchangeResult(
+          success: true,
+          billId: billId,
+          message: '兑换已完成',
+        );
+      }
+      if (completed == false) {
+        return ScoreExchangeResult(
+          success: false,
+          pending: true,
+          billId: billId,
+          message: '兑换结果待确认，请先核对官方记录，勿重复兑换',
+        );
+      }
+      return ScoreExchangeResult(
+        success: false,
+        pending: true,
+        billId: billId,
+        message: '兑换账单不匹配，请核对官方记录后再操作',
+      );
+    } catch (e) {
+      return ScoreExchangeResult(
+        success: false,
+        pending: true,
+        billId: billId,
+        message: '兑换已提交但账单查询失败，请核对官方记录',
+      );
+    }
+  }
+
   Future<ScoreSubmitResult> _submit({
     required String adId,
     required ScorePlatform platform,

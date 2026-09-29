@@ -290,3 +290,65 @@ List<ScoreRecord> parseScoreRecords(dynamic body) {
   }
   return out;
 }
+
+
+/// 积分兑换结果
+class ScoreExchangeResult {
+  /// 是否确认兑换成功（账单状态已完成）
+  final bool success;
+
+  /// 是否处于「待确认」状态：请求可能已生效，但账单未确认，
+  /// 此时必须提示用户去官方记录核对，**不要重复兑换**
+  final bool pending;
+
+  final String message;
+  final String? billId;
+
+  const ScoreExchangeResult({
+    required this.success,
+    required this.message,
+    this.pending = false,
+    this.billId,
+  });
+}
+
+/// 可兑换档位（每份积分），与原厂一致
+const List<int> scoreExchangeAmounts = [100, 1000];
+
+/// 校验兑换请求参数：积分必须为正且是 100 的整数倍
+bool isValidExchangeScore(int score) => score > 0 && score % 100 == 0;
+
+/// 份数是否有效（档位合法、份数 > 0、且不超过可用积分）
+bool isValidExchangeQuantity({
+  required int unitScore,
+  required int quantity,
+  required int available,
+}) {
+  if (!scoreExchangeAmounts.contains(unitScore)) return false;
+  if (quantity <= 0) return false;
+  return quantity <= available ~/ unitScore;
+}
+
+/// 从兑换响应中取账单号（data.sn）
+String? exchangeBillIdOf(dynamic body) {
+  if (body is! Map) return null;
+  final data = body['data'];
+  if (data is! Map) return null;
+  final sn = data['sn']?.toString().trim() ?? '';
+  if (sn.isEmpty || sn == 'null') return null;
+  return sn;
+}
+
+/// 校验账单查询结果：
+/// - true  → 账单 id 匹配且 status == 3（兑换已完成）
+/// - false → 账单 id 匹配但未完成
+/// - null  → 账单缺失或 id 不匹配（视为待确认）
+bool? exchangeCompletedOf(dynamic body, String expectedBillId) {
+  if (body is! Map) return null;
+  final data = body['data'];
+  if (data is! Map) return null;
+  final bill = data['bill'];
+  if (bill is! Map) return null;
+  if (bill['id']?.toString() != expectedBillId) return null;
+  return (bill['status'] is num ? (bill['status'] as num).toInt() : -1) == 3;
+}
