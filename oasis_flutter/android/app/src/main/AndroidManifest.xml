@@ -12,6 +12,12 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- 接水监测前台服务 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- 接水结果通知（Android 13+ 需要运行时申请） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
     <!-- 相机硬件特性声明 - 设置为非必需以支持Chrome OS等大屏设备 -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -58,6 +64,38 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- 桌面小部件：接水控制 -->
+        <receiver
+            android:name=".widget.OasisWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="uno.skkk.oasis.widget.ACTION_WIDGET_START" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- 接水监测前台服务：小部件/磁贴触发，自己发 HTTP 不依赖 Flutter -->
+        <service
+            android:name=".widget.WaterMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- 快捷设置磁贴 -->
+        <service
+            android:name=".widget.OasisTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_water_drop"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

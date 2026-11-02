@@ -8,6 +8,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import uno.skkk.oasis.widget.WidgetBridge
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "uno.skkk.oasis/apk_installer"
@@ -15,7 +16,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        
+
         // APK 安装通道
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -41,6 +42,13 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        // 桌面小部件 / 快捷开关通道
+        val widgetChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            WidgetBridge.CHANNEL_NAME,
+        )
+        widgetChannel.setMethodCallHandler(WidgetBridge(applicationContext, widgetChannel))
     }
 
     private fun installApk(filePath: String): Boolean {

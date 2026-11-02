@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面小部件配色（浅色） -->
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_title">#2C3E50</color>
+    <color name="widget_status_text">#405258</color>
+
+    <!-- 快捷开关磁贴标称颜色，与 App 主色一致 -->
+    <color name="widget_accent">#4CAF50</color>
+</resources>

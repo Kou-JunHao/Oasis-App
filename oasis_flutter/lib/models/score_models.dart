@@ -131,13 +131,27 @@ class ScoreRecord {
   /// 关联的任务/广告 id，用于统计今日各任务已完成次数
   final String adId;
 
+  /// 服务端记录的 type：101 任务发放 / 104 签到 / 105 用户消费积分（接水扣费）
+  final int type;
+
   const ScoreRecord({
     required this.time,
     required this.score,
     required this.isIncome,
     required this.title,
     this.adId = '',
+    this.type = 0,
   });
+
+  /// 是否为「接水消费」记录。
+  ///
+  /// 服务端给接水扣费的 type 是 105；life-798 里写的是 107，
+  /// 两种都可能出现，所以都收。
+  bool get isWaterConsumption =>
+      type == 105 || type == 107 || (!isIncome && score < 0);
+
+  /// 花费金额（元），只对接水消费有意义。
+  double get spentYuan => isWaterConsumption ? score.abs() / 1000.0 : 0;
 
   /// 是否为今天的记录
   bool isToday(DateTime now) {
@@ -253,12 +267,12 @@ List<ScoreRecord> parseScoreRecords(dynamic body) {
     final inner = item['data'] is Map ? item['data'] as Map : const {};
     final raw = pick(item, scoreKeys) ?? pick(inner, scoreKeys) ?? 0;
 
-    // 方向判定：type/src 101 视为收入，107 或带 spend 字段视为支出
+    // 方向判定：type/src 101 视为收入，105/107 或带 spend 字段视为支出
     final type = item['type'] != null ? _int(item['type']) : _int(inner['type']);
     final src = _int(item['src']);
     final spendField = inner.containsKey('spend');
     bool isIncome;
-    if (type == 107 || spendField) {
+    if (type == 105 || type == 107 || spendField) {
       isIncome = false;
     } else if (type == 101 || src == 101) {
       isIncome = true;
@@ -277,6 +291,7 @@ List<ScoreRecord> parseScoreRecords(dynamic body) {
           pickText(inner, dataTitleKeys) ??
           (isIncome ? '积分获得' : '积分使用'),
       adId: adId,
+      type: type,
     ));
   }
   return out;

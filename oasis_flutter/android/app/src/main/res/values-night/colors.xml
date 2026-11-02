@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 桌面小部件配色（深色） -->
+    <color name="widget_bg">#1E1E1E</color>
+    <color name="widget_title">#ECEFF1</color>
+    <color name="widget_status_text">#B0BEC5</color>
+</resources>

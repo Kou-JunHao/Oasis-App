@@ -7,6 +7,7 @@ import '../models/api_models.dart';
 import '../widgets/bottom_sheet_helper.dart';
 import '../widgets/qr_scanner_screen.dart';
 import '../widgets/device_group_dialog.dart';
+import '../services/widget_service.dart';
 
 /// 设备列表页面 - 参考Kotlin的DeviceListFragment
 class DeviceScreen extends StatefulWidget {
@@ -36,8 +37,37 @@ class _DeviceScreenState extends State<DeviceScreen>
         listen: false,
       );
       deviceProvider.startDevicePolling();
-      deviceProvider.fetchDevices();
+      deviceProvider.fetchDevices().then((_) => _syncWidgetDefaultDevice());
     });
+  }
+
+  /// 设备列表变化后校正小部件默认设备：
+  /// - 设备已被移除（取消收藏/换号）→ 清掉默认设备，避免小部件点了报错
+  /// - 备注改过 → 同步最新显示名
+  Future<void> _syncWidgetDefaultDevice() async {
+    if (!mounted) return;
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    final devices = deviceProvider.devices;
+    if (devices.isEmpty) return;
+
+    final widgetDeviceId = await WidgetService.readDeviceId();
+    if (widgetDeviceId.isEmpty) return;
+
+    final match = devices.where((d) => d.id == widgetDeviceId).firstOrNull;
+    if (match == null) {
+      await WidgetService.clearDefaultDevice();
+      return;
+    }
+
+    final note = deviceProvider.getDeviceNote(match.id);
+    final displayName = note.isNotEmpty ? note : (match.name ?? match.id);
+    final currentName = await WidgetService.readDeviceName();
+    if (currentName != displayName) {
+      await WidgetService.setDefaultDevice(
+        deviceId: match.id,
+        deviceName: displayName,
+      );
+    }
   }
 
   @override
@@ -317,6 +347,10 @@ class _DeviceScreenState extends State<DeviceScreen>
     final note = deviceProvider.getDeviceNote(device.id);
     final isPinned = deviceProvider.isDevicePinned(device.id);
     final title = note.isNotEmpty ? note : (device.name ?? device.id);
+    final widgetDeviceId = await WidgetService.readDeviceId();
+    if (!context.mounted) return;
+    final isWidgetDefault = widgetDeviceId == device.id;
+    final accent = Theme.of(context).colorScheme.primary;
 
     final result = await showMenuBottomSheet<String>(
       context: context,
@@ -338,7 +372,7 @@ class _DeviceScreenState extends State<DeviceScreen>
           title: isPinned ? '取消置顶' : '置顶设备',
           subtitle: '在列表顶部显示',
           icon: Icons.push_pin_outlined,
-          color: Theme.of(context).colorScheme.primary,
+          color: accent,
           value: 'pin',
         ),
         MenuOption(
@@ -346,6 +380,17 @@ class _DeviceScreenState extends State<DeviceScreen>
           subtitle: '将设备归类到指定分组',
           icon: Icons.group_rounded,
           value: 'group',
+        ),
+        MenuOption(
+          title: isWidgetDefault ? '取消默认设备' : '设为默认设备',
+          subtitle: isWidgetDefault
+              ? '桌面小部件与快捷开关将不再指向它'
+              : '桌面小部件、快捷开关点一下就能启动它',
+          icon: isWidgetDefault
+              ? Icons.widgets_outlined
+              : Icons.widgets_rounded,
+          color: isWidgetDefault ? null : accent,
+          value: 'default',
         ),
         MenuOption(
           title: '删除设备',
@@ -374,11 +419,52 @@ class _DeviceScreenState extends State<DeviceScreen>
             builder: (context) => DeviceGroupDialog(deviceId: device.id),
           );
           break;
+        case 'default':
+          await _toggleWidgetDefaultDevice(
+            context,
+            device,
+            deviceProvider,
+            isWidgetDefault,
+          );
+          break;
         case 'delete':
           await _deleteDeviceFromCard(context, device, deviceProvider);
           break;
       }
     }
+  }
+
+  /// 设置 / 取消桌面小部件与快捷开关的默认设备
+  Future<void> _toggleWidgetDefaultDevice(
+    BuildContext context,
+    DeviceDetail device,
+    DeviceProvider deviceProvider,
+    bool isDefault,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final displayName = deviceProvider.getDeviceNote(device.id).isNotEmpty
+        ? deviceProvider.getDeviceNote(device.id)
+        : (device.name ?? device.id);
+
+    if (isDefault) {
+      await WidgetService.clearDefaultDevice();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('已取消默认设备，桌面小部件将显示为未配置')),
+      );
+      setState(() {});
+      return;
+    }
+
+    await WidgetService.setDefaultDevice(
+      deviceId: device.id,
+      deviceName: displayName,
+    );
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text('已将「$displayName」设为默认设备，可在桌面添加接水小部件')),
+    );
+    setState(() {});
   }
 
   /// 编辑设备备注

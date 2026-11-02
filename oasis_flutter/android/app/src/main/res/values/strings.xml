@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Oasis</string>
+
+    <!-- 桌面小部件 -->
+    <string name="widget_label">接水控制</string>
+    <string name="widget_title">出水控制</string>
+    <string name="widget_action_configure">点击设置</string>
+    <string name="widget_action_start">启动设备</string>
+    <string name="widget_status_unconfigured">未配置 · 点击设置</string>
+    <string name="widget_status_ready">点击按钮启动接水</string>
+
+    <!-- 快捷设置磁贴 -->
+    <string name="tile_label">启动设备</string>
+
+    <!-- 接水监测通知 -->
+    <string name="water_channel_name">接水状态</string>
+    <string name="water_channel_description">显示接水过程与消费结果</string>
+    <string name="water_notification_title">正在接水</string>
+    <string name="water_notification_starting">正在启动设备…</string>
+    <string name="water_notification_monitoring">正在监测出水量，结束后会自动结算</string>
+    <string name="water_notification_done">接水完成</string>
+</resources>

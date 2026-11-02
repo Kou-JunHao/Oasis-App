@@ -5,6 +5,11 @@ import '../services/api_service.dart';
 import '../models/device_detail_models.dart';
 import '../providers/score_provider.dart';
 import '../providers/wallet_provider.dart';
+import '../models/water_estimate.dart';
+import '../services/water_usage_calculator.dart';
+import '../services/water_usage_settings.dart';
+import '../services/widget_service.dart';
+import '../widgets/bottom_sheet_helper.dart';
 import 'recharge_screen.dart';
 import 'score_screen.dart';
 
@@ -19,6 +24,12 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen> {
   late PageController _pageController;
 
+  /// 估算喝水量的换算设置（默认 ¥0.16 对应 500 ml）
+  WaterEstimate _waterEstimate = WaterUsageSettings.defaults;
+
+  /// 桌面小部件当前指向的默认设备名（未设置时为空）
+  String _widgetDeviceName = '';
+
   @override
   void initState() {
     super.initState();
@@ -29,8 +40,85 @@ class _WalletScreenState extends State<WalletScreen> {
       context.read<WalletProvider>().fetchWalletBalance();
       // 钱包卡片上要显示积分，顺带取一次
       context.read<ScoreProvider>().ensureLoaded();
+      _loadWaterEstimate();
     });
   }
+
+  Future<void> _loadWaterEstimate() async {
+    final estimate = await WaterUsageSettings.read();
+    final deviceName = await WidgetService.readDeviceName();
+    if (!mounted) return;
+    setState(() {
+      _waterEstimate = estimate;
+      _widgetDeviceName = deviceName;
+    });
+  }
+
+  /// 调整估算水量（金额 ↔ 容积 的换算比例）
+  Future<void> _editWaterEstimate() async {
+    final result = await showInputBottomSheet(
+      context: context,
+      title: '估算喝水量',
+      icon: Icons.water_drop_outlined,
+      fields: [
+        InputField(
+          key: 'amount',
+          label: '金额（元）',
+          hint: '例如 0.16',
+          helper: '花了多少钱',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          initialValue: _waterEstimate.amountYuan.toString(),
+          validator: (value) {
+            final parsed = double.tryParse(value?.trim() ?? '');
+            if (parsed == null || parsed <= 0) return '请输入大于 0 的金额';
+            return null;
+          },
+        ),
+        InputField(
+          key: 'volume',
+          label: '水量（毫升）',
+          hint: '例如 500',
+          helper: '对应多少毫升水',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          initialValue: _waterEstimate.volumeMl.toString(),
+          validator: (value) {
+            final parsed = double.tryParse(value?.trim() ?? '');
+            if (parsed == null || parsed <= 0) return '请输入大于 0 的水量';
+            return null;
+          },
+        ),
+      ],
+      confirmText: '保存',
+    );
+    if (result == null || !mounted) return;
+
+    final amount = double.tryParse(result['amount']?.trim() ?? '');
+    final volume = double.tryParse(result['volume']?.trim() ?? '');
+    if (amount == null || volume == null || amount <= 0 || volume <= 0) {
+      return;
+    }
+
+    final estimate = _waterEstimate.copyWith(
+      amountYuan: amount,
+      volumeMl: volume,
+    );
+    final saved = await WaterUsageSettings.save(estimate);
+    if (!mounted) return;
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('保存失败，请检查填写的换算比例')),
+      );
+      return;
+    }
+    setState(() => _waterEstimate = estimate);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已更新：¥${_trimZero(amount)} ≈ ${_trimZero(volume)} ml')),
+    );
+  }
+
+  static String _trimZero(double value) => value == value.roundToDouble()
+      ? value.toStringAsFixed(0)
+      : value.toString();
 
   @override
   void dispose() {
@@ -121,6 +209,9 @@ class _WalletScreenState extends State<WalletScreen> {
                     const SizedBox(height: 24),
                     // 积分任务入口
                     _buildScoreEntry(context),
+                    const SizedBox(height: 16),
+                    // 用水概览（估算喝水量）
+                    _buildWaterSummary(context),
                   ]),
                 ),
               ),
@@ -282,6 +373,131 @@ class _WalletScreenState extends State<WalletScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 用水概览：把积分消费折算成估算喝水量
+  Widget _buildWaterSummary(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Consumer<ScoreProvider>(
+      builder: (context, scoreProvider, child) {
+        final summary = WaterUsageCalculator.summarize(
+          scoreProvider.records,
+          estimate: _waterEstimate,
+        );
+        final hasData = !summary.isEmpty;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.water_drop_rounded,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        '估算喝水量',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.tune_rounded, size: 20),
+                      tooltip: '调整换算比例',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _editWaterEstimate,
+                    ),
+                  ],
+                ),
+                if (!hasData)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4, right: 8),
+                    child: Text(
+                      '还没有用水记录',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  )
+                else ...[
+                  _buildWaterRow('今日', summary.todayYuan, summary.todayMillilitres),
+                  _buildWaterRow('本月', summary.monthYuan, summary.monthMillilitres),
+                  _buildWaterRow('今年', summary.yearYuan, summary.yearMillilitres),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  '按 ¥${_trimZero(_waterEstimate.amountYuan)} ≈ '
+                  '${_trimZero(_waterEstimate.volumeMl)} ml 折算，仅供参考',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                if (_widgetDeviceName.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.widgets_rounded,
+                        size: 16,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '小部件默认设备：$_widgetDeviceName',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWaterRow(String label, double yuan, double millilitres) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, right: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              yuan > 0 ? '¥${yuan.toStringAsFixed(2)}' : '--',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+          Text(
+            millilitres > 0 ? WaterEstimate.waterTextOf(millilitres) : '--',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.primary,
             ),
           ),
         ],
