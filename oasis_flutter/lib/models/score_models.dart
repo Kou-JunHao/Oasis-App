@@ -1,19 +1,16 @@
 /// 积分任务相关模型
 ///
-/// 接口结构（实测自原厂 App / life-798 实现）：
+/// 接口结构（实测自原厂 App 3.1.10）：
 ///   GET /api/v1/acc/score/mission-lst
 ///     data.missions[]      {refId, name|title, score, limit}
 ///     data.accScoreRsp     {validScore, totalScore, daily:{week}}
 ///     data.dailyRSP        {adId, score, config:[{rule, score, msg}]}
 ///   GET /api/v1/acc/score/score-lst?page=0&size=N&hasCount=1
 ///     data[]               {ctime, data:{...}, score|spend|...}
-library;
-
-/// 积分平台
 ///
-/// - [app]：App 端，`ApplicationType: 1,1`，versioncode 跟随动态伪装值，提交时 URL 追加 `&s=1`
-/// - [main]：主平台，`ApplicationType: 1,5`，versioncode 固定 2.0.178
-enum ScorePlatform { app, main }
+/// 3.1.10 起服务端只保留 App 通道（`ApplicationType: 1,1`），
+/// 旧的「主平台 1,5 + versioncode 2.0.178」分支已随签名协议一并废弃。
+library;
 
 /// 积分任务
 class ScoreMission {
@@ -21,17 +18,15 @@ class ScoreMission {
   final String name;
   final int score;
   final int limit;
-  final ScorePlatform platform;
 
   const ScoreMission({
     required this.refId,
     required this.name,
     required this.score,
     required this.limit,
-    required this.platform,
   });
 
-  static ScoreMission? fromJson(Map<String, dynamic> json, ScorePlatform platform) {
+  static ScoreMission? fromJson(Map<String, dynamic> json) {
     final refId = (json['refId'] ?? '').toString().trim();
     if (refId.isEmpty) return null;
     final name = (json['name'] ?? json['title'] ?? '任务').toString().trim();
@@ -40,7 +35,6 @@ class ScoreMission {
       name: name.isEmpty ? '任务' : name,
       score: _int(json['score']),
       limit: _int(json['limit']),
-      platform: platform,
     );
   }
 
@@ -70,14 +64,12 @@ class DailySignIn {
   final int baseScore;
   final int weekMask;
   final List<SignInRule> rules;
-  final ScorePlatform platform;
 
   const DailySignIn({
     required this.adId,
     required this.baseScore,
     required this.weekMask,
     required this.rules,
-    required this.platform,
   });
 
   bool get available => adId.isNotEmpty;
@@ -164,7 +156,7 @@ int _int(dynamic v) {
 }
 
 /// 解析 mission-lst 响应
-ScoreOverview parseScoreOverview(dynamic body, ScorePlatform platform) {
+ScoreOverview parseScoreOverview(dynamic body) {
   if (body is! Map) return ScoreOverview.empty;
   final data = body['data'];
   if (data is! Map) return ScoreOverview.empty;
@@ -179,7 +171,7 @@ ScoreOverview parseScoreOverview(dynamic body, ScorePlatform platform) {
   if (rawMissions is List) {
     for (final item in rawMissions) {
       if (item is Map<String, dynamic>) {
-        final m = ScoreMission.fromJson(item, platform);
+        final m = ScoreMission.fromJson(item);
         if (m != null) missions.add(m);
       }
     }
@@ -210,7 +202,6 @@ ScoreOverview parseScoreOverview(dynamic body, ScorePlatform platform) {
         baseScore: _int(dailyRsp['score']),
         weekMask: week,
         rules: rules,
-        platform: platform,
       );
     }
   }

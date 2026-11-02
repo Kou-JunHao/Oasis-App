@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oasis_flutter/models/score_models.dart';
-import 'package:oasis_flutter/services/score_service.dart';
+import 'package:oasis_flutter/services/score_signer.dart';
 
 void main() {
-  group('积分签名', () {
-    test('时间戳为 30 秒粒度', () {
+  group('积分签名（3.1.10 协议）', () {
+    test('时间戳为 30 秒粒度且单位是秒', () {
       expect(ScoreSigner.windowValue(1790400871389), 1790400870);
       // 同一 30 秒窗口内取值相同
       expect(ScoreSigner.windowValue(1790400899999), 1790400870);
@@ -19,34 +19,70 @@ void main() {
       expect(ScoreSigner.tail8(''), '');
     });
 
-    test('App 端签名结果与实测算法一致', () {
-      // md5("DAILY_CHECK_IN" + "1790400870" + "90abcdef" + "76543210" + 测试盐值)
+    test('路径 token 为去符号后的末 8 位', () {
+      expect(ScoreSigner.pathToken(), 'coresend');
+      expect(
+        ScoreSigner.pathToken('/api/v1/acc/score/score-send'),
+        'coresend',
+      );
+      // 短路径左侧补 0 后取末 8 位
+      expect(ScoreSigner.pathToken('/ab'), '000000ab');
+    });
+
+    test('adId 规范化：按 key 稳定排序', () {
+      expect(ScoreSigner.normalizeAdId('b=2&a=1'), 'a=1&b=2');
+      expect(ScoreSigner.normalizeAdId('a=1&b=2'), 'a=1&b=2');
+      expect(ScoreSigner.normalizeAdId('DAILY_CHECK_IN'), 'DAILY_CHECK_IN');
+      // 同 key 保留原顺序
+      expect(ScoreSigner.normalizeAdId('a=2&a=1'), 'a=2&a=1');
+      expect(ScoreSigner.normalizeAdId('a=1&a=2'), 'a=1&a=2');
+    });
+
+    test('签名结果与官方 3.1.10 验证向量一致', () {
+      // 向量来源：上游同源客户端测试用例
+      //   CheckIn.sign("daily-fixture", "prefix-12345678", "prefix-abcdefgh",
+      //                1_792_944_000_000L, protocolVersion = "3.1.10")
+      const int mondayMidnightChina = 1792944000000; // 2026-10-26 00:00 +08
       expect(
         ScoreSigner.sign(
-          adId: 'DAILY_CHECK_IN',
-          token: 'token1234567890abcdef',
-          uid: 'uid_9876543210',
-          salt: 'TEST_SALT_0123456789abcdefghijkl',
-          nowMs: 1790400871389,
+          adId: 'daily-fixture',
+          token: 'prefix-12345678',
+          uid: 'prefix-abcdefgh',
+          nowMs: mondayMidnightChina,
         ),
-        'e44a576920192dbf84ae3b20d73d14bb',
+        '36ce4348b84310502e39e08598667b4a',
+      );
+      // 同一时间窗内 +29999ms 结果不变
+      expect(
+        ScoreSigner.sign(
+          adId: 'daily-fixture',
+          token: 'prefix-12345678',
+          uid: 'prefix-abcdefgh',
+          nowMs: mondayMidnightChina + 29999,
+        ),
+        '36ce4348b84310502e39e08598667b4a',
+      );
+      // 跨到下一个时间窗则变化
+      expect(
+        ScoreSigner.sign(
+          adId: 'daily-fixture',
+          token: 'prefix-12345678',
+          uid: 'prefix-abcdefgh',
+          nowMs: mondayMidnightChina + 30000,
+        ),
+        '5f3896b39f4c621e6893663d54bc2dc0',
       );
     });
 
-    test('主平台签名使用不同盐值', () {
-      expect(
-        ScoreSigner.sign(
-          adId: 'ad_reward_001',
-          token: 'abcdefghijklmnop',
-          uid: '12345678',
-          salt: 'TEST_SALT_0123456789abcdefghijkl',
-          nowMs: 1790400899999,
-        ),
-        'f153e8cd6576a627135c8af47a19083f',
-      );
-      // 盐值来自 gitignore 的 score_secrets.dart，仓库里只保留算法
-      expect(ScoreSigner.saltOf(ScorePlatform.app), ScoreSigner.saltApp);
-      expect(ScoreSigner.saltOf(ScorePlatform.main), ScoreSigner.saltMain);
+    test('签名对参数顺序不敏感但对重复 key 顺序敏感', () {
+      String signOf(String adId) => ScoreSigner.sign(
+            adId: adId,
+            token: 'prefix-12345678',
+            uid: 'prefix-abcdefgh',
+            nowMs: 1792944000000,
+          );
+      expect(signOf('a=1&b=2'), signOf('b=2&a=1'));
+      expect(signOf('a=2&a=1'), isNot(signOf('a=1&a=2')));
     });
   });
 
@@ -74,7 +110,7 @@ void main() {
             ],
           },
         },
-      }, ScorePlatform.app);
+      });
 
       expect(overview.validScore, 1280);
       expect(overview.totalScore, 3000);
@@ -95,7 +131,6 @@ void main() {
         adId: 'DAILY_CHECK_IN',
         baseScore: 5,
         weekMask: 0x03, // 周一、周二已签
-        platform: ScorePlatform.app,
         rules: const [
           SignInRule(weekMask: 0x03, score: 10, message: '连签2天'),
           SignInRule(weekMask: 0x07, score: 20, message: '连签3天'),
@@ -111,8 +146,8 @@ void main() {
     });
 
     test('响应异常时返回空概览', () {
-      expect(parseScoreOverview(null, ScorePlatform.app).missions, isEmpty);
-      expect(parseScoreOverview({'code': -99}, ScorePlatform.app).validScore, 0);
+      expect(parseScoreOverview(null).missions, isEmpty);
+      expect(parseScoreOverview({'code': -99}).validScore, 0);
     });
   });
 
@@ -123,7 +158,6 @@ void main() {
             name: name,
             score: score,
             limit: limit,
-            platform: ScorePlatform.app,
           );
       expect(m('看广告', 10, 1).executables, isTrue);
       expect(m('免费权益领取', 10, 1).executables, isFalse);
