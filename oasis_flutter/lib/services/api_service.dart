@@ -102,7 +102,12 @@ class ApiService {
         }
 
         // 添加 token
-        if (_token != null && _token!.isNotEmpty) {
+        // 登录接口必须不带 authorization：官方抓包里登录请求完全没有这个头，
+        // 带上旧 token 会让服务端走「已登录换绑」分支而不是「短信登录」分支。
+        final skipAuth = options.extra['skipAuth'] == true;
+        if (skipAuth) {
+          options.headers.remove('authorization');
+        } else if (_token != null && _token!.isNotEmpty) {
           options.headers['authorization'] = _token;
           if (AppConfig.isDebugMode) {
             // ignore: avoid_print
@@ -217,7 +222,7 @@ class ApiService {
   /// 用户登录
   ///
   /// 3.1.10 起服务端要求 URL 上带 `?sign=`（keyed BLAKE3，见 [LoginSigner]），
-  /// body 只发 `{authCode, un}`。
+  /// body 只发 `{authCode, un}`，且**不带** `authorization` 头。
   Future<ApiResponse<LoginData>> login({
     required String phoneNumber,
     required String smsCode,
@@ -233,9 +238,10 @@ class ApiService {
       queryParameters: {'sign': sign},
       data: {
         if (openCode.isNotEmpty) 'openCode': openCode,
-        'un': phoneNumber,
         'authCode': smsCode,
+        'un': phoneNumber,
       },
+      options: Options(extra: {'skipAuth': true}),
     );
     return ApiResponse.fromJson(
       response.data,

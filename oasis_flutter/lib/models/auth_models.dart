@@ -12,11 +12,14 @@ class LoginRequest {
 
   /// 官方 3.1.10 的登录 body 只有 `{authCode, un}`（`openCode` 为空时省略）。
   /// 早期版本多传的 `cid` 服务端并不接收，已移除。
+  ///
+  /// 字段顺序与官方抓包保持一致（`authCode` 在前），避免服务端按原始
+  /// body 顺序重算签名时对不上。
   Map<String, dynamic> toJson() {
     return {
       if (openCode.isNotEmpty) 'openCode': openCode,
-      'un': un,
       'authCode': authCode,
+      'un': un,
     };
   }
 }
@@ -34,12 +37,32 @@ class LoginData {
   });
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
+    final al = json['al'];
+    final ar = json['ar'];
     return LoginData(
-      al: AuthLoginData.fromJson(json['al'] as Map<String, dynamic>),
-      ar: AuthRoleData.fromJson(json['ar'] as Map<String, dynamic>),
-      showAd: json['showAd'] as int? ?? 0,
+      al: AuthLoginData.fromJson(
+        al is Map<String, dynamic> ? al : const <String, dynamic>{},
+      ),
+      ar: AuthRoleData.fromJson(
+        ar is Map<String, dynamic> ? ar : const <String, dynamic>{},
+      ),
+      showAd: _asInt(json['showAd']),
     );
   }
+}
+
+/// 把任意 JSON 值安全地转成 int（null / 字符串 / 浮点都不抛异常）。
+int _asInt(Object? value) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+/// 把任意 JSON 值安全地转成 String（null 转空串，不抛异常）。
+String _asString(Object? value) {
+  if (value is String) return value;
+  if (value == null) return '';
+  return value.toString();
 }
 
 /// 认证登录数据
@@ -62,15 +85,20 @@ class AuthLoginData {
     required this.uid,
   });
 
+  /// 官方 3.1.10 的登录响应里 `al` 只有
+  /// `{atype, dtype, eid, ltime, stype, token, uid}` —— **没有 `oid`**。
+  /// 早期版本用 `json['oid'] as String` 直接强转，遇到 null 会抛
+  /// `type 'Null' is not a subtype of type 'String' in type cast`，
+  /// 把已经成功的登录当成失败。这里全部改成容错解析。
   factory AuthLoginData.fromJson(Map<String, dynamic> json) {
     return AuthLoginData(
-      atype: json['atype'] as int,
-      dtype: json['dtype'] as int,
-      eid: json['eid'] as String,
-      oid: json['oid'] as String,
-      stype: json['stype'] as int,
-      token: json['token'] as String,
-      uid: json['uid'] as String,  // 使用uid而不是oid
+      atype: _asInt(json['atype']),
+      dtype: _asInt(json['dtype']),
+      eid: _asString(json['eid']),
+      oid: _asString(json['oid']),
+      stype: _asInt(json['stype']),
+      token: _asString(json['token']),
+      uid: _asString(json['uid']),  // 使用uid而不是oid
     );
   }
 }

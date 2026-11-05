@@ -13,13 +13,13 @@ class AuthService {
   AuthService(this._apiService);
 
   /// 获取图形验证码
-  Future<Response> getCaptcha() async {
+  ///
+  /// [s] 是 0~1 的随机小数（官方 App 行为），[r] 是毫秒时间戳；
+  /// 同一个 [s] 必须原样复用到发短信码请求里。
+  Future<Response> getCaptcha(double s, int r) async {
     return await _apiService.get(
       '/api/v1/captcha/',
-      queryParameters: {
-        's': DateTime.now().millisecondsSinceEpoch,
-        'r': (DateTime.now().millisecondsSinceEpoch * 1000).toInt(),
-      },
+      queryParameters: {'s': s, 'r': r},
     );
   }
 
@@ -37,8 +37,11 @@ class AuthService {
         if (apiResponse.isSuccess) {
           return; // 成功
         } else {
-          // 根据错误码返回相应错误信息
-          final errorMsg = _getErrorMessage(apiResponse.code);
+          // 优先透出服务端原文，否则按错误码兜底
+          final serverMsg = apiResponse.message;
+          final errorMsg = (serverMsg != null && serverMsg.isNotEmpty)
+              ? serverMsg
+              : _getErrorMessage(apiResponse.code);
           throw Exception(errorMsg);
         }
       } else {
@@ -86,6 +89,9 @@ class AuthService {
         '/api/v1/acc/login',
         queryParameters: {'sign': sign},
         data: request.toJson(),
+        // 官方登录请求完全没有 authorization 头；带上旧 token 会让服务端
+        // 走「已登录换绑」分支而不是「短信登录」分支。
+        options: Options(extra: {'skipAuth': true}),
       );
 
       if (response.statusCode == 200) {
@@ -113,12 +119,16 @@ class AuthService {
             ),
           );
         } else {
-          // 错误码映射
-          final errorMsg = switch (apiResponse.code) {
-            -2 => '验证码错误',
-            -1 => '参数错误',
-            _ => '登录失败，请重试(错误码: ${apiResponse.code})',
-          };
+          // 优先透出服务端原文（例如「请升级最新版应用」「验签失败」），
+          // 否则按错误码兜底。之前一律映射成「参数错误」，把真实原因盖掉了。
+          final serverMsg = apiResponse.message;
+          final errorMsg = (serverMsg != null && serverMsg.isNotEmpty)
+              ? serverMsg
+              : switch (apiResponse.code) {
+                  -2 => '验证码错误',
+                  -1 => '参数错误',
+                  _ => '登录失败，请重试(错误码: ${apiResponse.code})',
+                };
           throw Exception(errorMsg);
         }
       } else {

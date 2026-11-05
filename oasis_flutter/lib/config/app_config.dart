@@ -20,8 +20,12 @@ class AppConfig {
   static const String clientVersionPattern =
       r'版本号\s*</div>\s*<div[^>]*>\s*([0-9]+(?:\.[0-9]+){1,3})';
 
-  /// 基线版本号：动态获取失败且本地无缓存、用户也未自定义时的最后兜底
-  static const String baselineClientVersion = '3.1.9';
+  /// 基线版本号：动态获取失败且本地无缓存、用户也未自定义时的最后兜底。
+  ///
+  /// 必须是 3.1.10 —— 服务端从 3.1.10 起启用了新的登录签名协议，低于这个
+  /// 版本号会被判定为「请升级最新版应用」。抓取失败时宁可冒充 3.1.10，
+  /// 也不能退回 3.1.9。
+  static const String baselineClientVersion = '3.1.10';
 
   /// 单次抓取的超时时间
   static const Duration clientVersionFetchTimeout = Duration(seconds: 5);

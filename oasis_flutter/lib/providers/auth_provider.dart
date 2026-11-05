@@ -235,7 +235,9 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return true;
     } catch (e) {
-      _setError('登录失败: $e');
+      // 去掉 Dart 自动加的 "Exception: " 前缀，让服务端原文直接展示给用户
+      final msg = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      _setError('登录失败: $msg');
       _setLoading(false);
       return false;
     }
