@@ -3,21 +3,20 @@ class LoginRequest {
   final String openCode;
   final String un;
   final String authCode;
-  final String cid;
 
   LoginRequest({
     this.openCode = '',
     required this.un,
     required this.authCode,
-    this.cid = '',
   });
 
+  /// 官方 3.1.10 的登录 body 只有 `{authCode, un}`（`openCode` 为空时省略）。
+  /// 早期版本多传的 `cid` 服务端并不接收，已移除。
   Map<String, dynamic> toJson() {
     return {
-      'openCode': openCode,
+      if (openCode.isNotEmpty) 'openCode': openCode,
       'un': un,
       'authCode': authCode,
-      'cid': cid,
     };
   }
 }
@@ -99,7 +98,8 @@ class AuthRoleData {
 
 /// 获取验证码请求模型
 class GetCodeRequest {
-  final int s;
+  /// 图形验证码会话参数：官方 App 用 0~1 的随机小数，且与取图形码时同一个值
+  final double s;
   final String authCode;
   final String un;
 

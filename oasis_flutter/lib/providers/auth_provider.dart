@@ -177,7 +177,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// 获取短信验证码
-  Future<bool> getSmsCode(String phone, String captcha, int s) async {
+  ///
+  /// [s] 是取图形验证码时用的 0~1 随机小数，必须原样回传。
+  Future<bool> getSmsCode(String phone, String captcha, double s) async {
     try {
       _setLoading(true);
       _setError(null);
@@ -209,8 +211,6 @@ class AuthProvider extends ChangeNotifier {
       final request = LoginRequest(
         un: phone,
         authCode: code,
-        openCode: '',
-        cid: '',
       );
 
       final response = await _authService.login(request);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 import 'dart:typed_data';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -23,7 +24,9 @@ class _LoginScreenState extends State<LoginScreen> {
   int _countdown = 0;
   Uint8List? _captchaImage;
   bool _loadingCaptcha = false;
-  int _captchaS = 500; // 保存验证码会话参数,与Kotlin版本保持一致
+  /// 图形验证码会话参数：官方 App 用 0~1 的随机小数，取图形码与发短信码
+  /// 必须用同一个值，服务端据此把图形码与手机号绑定。
+  double _captchaS = 0.5;
 
   @override
   void initState() {
@@ -46,9 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // 验证码不需要token，可以创建临时ApiService
-      _captchaS = 500;
+      // s 用 0~1 的随机小数（对齐官方 App），r 用毫秒时间戳
+      _captchaS = Random().nextDouble();
       final r = DateTime.now().millisecondsSinceEpoch;
-      
+
       final tempApiService = ApiService();
       final response = await tempApiService.getCaptcha(_captchaS, r);
       

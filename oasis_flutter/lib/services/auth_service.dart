@@ -3,6 +3,8 @@ import '../config/app_config.dart';
 import '../models/auth_models.dart';
 import '../models/api_models.dart';
 import 'api_service.dart';
+import 'login_signer.dart';
+import 'server_clock.dart';
 
 /// 认证服务类
 class AuthService {
@@ -69,11 +71,20 @@ class AuthService {
   }
 
   /// 用户登录
+  ///
+  /// 3.1.10 起服务端要求 URL 上带 `?sign=`（keyed BLAKE3，见 [LoginSigner]），
+  /// 且 body 只发 `{authCode, un}`、不带 `authorization` 头。
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       // 版本相关请求头由 ApiService 拦截器统一注入
+      final sign = LoginSigner.sign(
+        phone: request.un,
+        smsCode: request.authCode,
+        nowMs: ServerClock.nowMs,
+      );
       final response = await _apiService.post(
         '/api/v1/acc/login',
+        queryParameters: {'sign': sign},
         data: request.toJson(),
       );
 

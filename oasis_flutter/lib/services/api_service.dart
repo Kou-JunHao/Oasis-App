@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
@@ -5,6 +7,8 @@ import '../models/api_models.dart';
 import '../models/auth_models.dart';
 import '../models/device_detail_models.dart';
 import 'client_version_service.dart';
+import 'login_signer.dart';
+import 'server_clock.dart';
 
 /// 宽松解析整数：服务端的总数可能是字符串（如 "6"）
 int _parseIntLenient(dynamic value, int fallback) {
@@ -126,6 +130,11 @@ class ApiService {
         return handler.next(options);
       },
       onResponse: (response, handler) {
+        // 用响应 Date 头校正服务器时钟：登录/积分签名都带 30 秒时间桶，
+        // 设备时钟偏差过大会算错桶导致验签失败。
+        ServerClock.syncFromDateHeader(
+          response.headers.value(HttpHeaders.dateHeader),
+        );
         // 登录态失效时服务端返回 HTTP 200 + code=-99，必须主动识别并登出
         if (isSessionExpiredPayload(response.data)) {
           _notifySessionExpired('code=$codeSessionExpired');
@@ -181,7 +190,10 @@ class ApiService {
   // ==================== 认证相关 API ====================
 
   /// 获取图形验证码
-  Future<Response<List<int>>> getCaptcha(int s, int r) async {
+  ///
+  /// [s] 是 0~1 的随机小数（官方 App 行为），[r] 是毫秒时间戳；
+  /// 同一个 [s] 要复用到发短信码请求里。
+  Future<Response<List<int>>> getCaptcha(double s, int r) async {
     return await _dio.get(
       'api/v1/captcha/',
       queryParameters: {'s': s, 'r': r},
@@ -191,7 +203,7 @@ class ApiService {
 
   /// 获取短信验证码
   Future<ApiResponse<dynamic>> getSmsCode({
-    required int s,
+    required double s,
     required String authCode,
     required String phoneNumber,
   }) async {
@@ -203,19 +215,26 @@ class ApiService {
   }
 
   /// 用户登录
+  ///
+  /// 3.1.10 起服务端要求 URL 上带 `?sign=`（keyed BLAKE3，见 [LoginSigner]），
+  /// body 只发 `{authCode, un}`。
   Future<ApiResponse<LoginData>> login({
     required String phoneNumber,
     required String smsCode,
     String openCode = '',
-    String cid = '',
   }) async {
+    final sign = LoginSigner.sign(
+      phone: phoneNumber,
+      smsCode: smsCode,
+      nowMs: ServerClock.nowMs,
+    );
     final response = await _dio.post(
       'api/v1/acc/login',
+      queryParameters: {'sign': sign},
       data: {
-        'openCode': openCode,
+        if (openCode.isNotEmpty) 'openCode': openCode,
         'un': phoneNumber,
         'authCode': smsCode,
-        'cid': cid,
       },
     );
     return ApiResponse.fromJson(
